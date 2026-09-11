@@ -12,15 +12,19 @@
 # branch so Render's Blueprint scanner finds a standard render.yaml here
 # without touching main's.
 #
-# Corrected twice against Render's real Blueprint validation (2026-09-11):
+# Corrected three times against Render's real Blueprint validation
+# (2026-09-11):
 # 1. No top-level `crons:` key — cron jobs are `services:` entries with
-#    `type: cron`, same shape as `type: web`.
-# 2. No `envVarGroups:` reference at the service level (only works inside
-#    the `projects:`/`environments:` grouping structure, unused here).
-#    CRON_SECRET is shared via `fromService` instead — each cron job pulls
-#    it straight from the Web Service, and carries no other env var it
-#    doesn't actually need (it's just a `curl` call, not a process that
-#    touches the database or any other secret itself).
+#    `type: cron`.
+# 2. No `envVarGroups:` reference at the service level.
+# 3. **Cron Jobs have no free plan on Render** — confirmed by Render's live
+#    validator ("free not a valid plan for service type cron"), contradicting
+#    what Render's own docs summary suggested. Rather than pay for cron on an
+#    otherwise-free interim deployment, the two scheduled jobs
+#    (payment-reminders, subscription-expiry) are simply NOT deployed here —
+#    see docs/known-limitations.md, which documents this as a real, current
+#    gap: those two jobs do not run against this environment at all.
+#    CRON_SECRET is dropped too — nothing on this branch calls those routes.
 
 services:
   - type: web
@@ -40,8 +44,6 @@ services:
           name: qr-menu-render-interim-db
           property: connectionString
       - key: AUTH_SECRET
-        generateValue: true
-      - key: CRON_SECRET
         generateValue: true
       - key: NEXT_PUBLIC_SITE_URL
         sync: false
@@ -65,44 +67,6 @@ services:
         value: "3"
       - key: AI_DESCRIPTION_DAILY_LIMIT
         value: "10"
-
-  # Cron Jobs also run on the free plan here — a much smaller compromise
-  # than the Web Service/Postgres free tiers above.
-  - type: cron
-    name: qr-menu-render-interim-payment-reminders
-    runtime: node
-    plan: free
-    region: singapore
-    branch: render-free-interim
-    schedule: "0 9 * * *"
-    buildCommand: npm ci
-    envVars:
-      - key: CRON_SECRET
-        fromService:
-          name: qr-menu-render-interim
-          property: envVarKey
-          envVarKey: CRON_SECRET
-    startCommand: >-
-      curl -sf -H "Authorization: Bearer $CRON_SECRET"
-      https://qr-menu-render-interim.onrender.com/api/cron/payment-reminders
-
-  - type: cron
-    name: qr-menu-render-interim-subscription-expiry
-    runtime: node
-    plan: free
-    region: singapore
-    branch: render-free-interim
-    schedule: "0 9 * * *"
-    buildCommand: npm ci
-    envVars:
-      - key: CRON_SECRET
-        fromService:
-          name: qr-menu-render-interim
-          property: envVarKey
-          envVarKey: CRON_SECRET
-    startCommand: >-
-      curl -sf -H "Authorization: Bearer $CRON_SECRET"
-      https://qr-menu-render-interim.onrender.com/api/cron/subscription-expiry
 
 databases:
   - name: qr-menu-render-interim-db
