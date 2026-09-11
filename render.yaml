@@ -4,26 +4,41 @@
 # file — one source of truth applied to both, per Constitution Principle VII
 # (parity derived from one place, not clicked together twice by hand and
 # risking drift). Plan values below are the real paid target
-# (specs/001-render-hosting-cutover FR-001a); the free-tier feasibility POC
-# (specs/003-render-feasibility-poc) does NOT edit this file — it applies a
-# generated copy with `plan: free` overrides instead (see that spec's
-# research.md), so this file always reflects the actual target
-# configuration, not a temporary experiment.
+# (specs/001-render-hosting-cutover FR-001a); the free-tier interim
+# deployment (specs/003-render-feasibility-poc) lives on its own
+# `render-free-interim` branch instead of editing this file, so this file
+# always reflects the actual target configuration, not the interim state.
 #
-# Secrets shared between a Web Service and its own Cron Jobs (CRON_SECRET,
-# so the cron caller's bearer token actually matches what the route expects)
-# live in an envVarGroup per environment, not `generateValue` on each
-# service independently — two independently generated values would never
-# match each other.
-#
-# Corrected 2026-09-11 (first real Render Blueprint validation attempt, via
-# render.free.yaml): there is no top-level `crons:` key in Render's
-# Blueprint schema — cron jobs are `services:` entries with `type: cron`,
-# same as `type: web`.
+# Corrected twice against Render's real Blueprint validation (2026-09-11):
+# 1. No top-level `crons:` key — cron jobs are `services:` entries with
+#    `type: cron`, same shape as `type: web`.
+# 2. No `envVarGroups:` reference at the service level (that field only
+#    exists inside the `projects:`/`environments:` grouping structure, which
+#    this flat Blueprint doesn't use). Cross-service secret sharing
+#    (CRON_SECRET, so a Cron Job's bearer token matches what its Web
+#    Service expects) uses `fromService` instead — see the cron entries
+#    below. Each cron job only declares CRON_SECRET; it has no other reason
+#    to need DATABASE_URL, GMAIL_SMTP_*, etc., since it's just a `curl` call
+#    against its Web Service, not a process that touches those services
+#    itself.
 
-envVarGroups:
-  - name: qr-menu-render-staging-secrets
+services:
+  - type: web
+    name: qr-menu-render-staging
+    runtime: node
+    plan: starter
+    region: singapore
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
     envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: qr-menu-render-staging-db
+          property: connectionString
       - key: AUTH_SECRET
         generateValue: true
       - key: CRON_SECRET
@@ -46,9 +61,27 @@ envVarGroups:
         sync: false
       - key: DEEPL_API_KEY
         sync: false
+      - key: PAYMENT_REMINDER_THRESHOLD_DAYS
+        value: "3"
+      - key: AI_DESCRIPTION_DAILY_LIMIT
+        value: "10"
 
-  - name: qr-menu-render-production-secrets
+  - type: web
+    name: qr-menu-render-production
+    runtime: node
+    plan: starter
+    region: singapore
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
     envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: qr-menu-render-production-db
+          property: connectionString
       - key: AUTH_SECRET
         generateValue: true
       - key: CRON_SECRET
@@ -71,49 +104,6 @@ envVarGroups:
         sync: false
       - key: DEEPL_API_KEY
         sync: false
-
-services:
-  - type: web
-    name: qr-menu-render-staging
-    runtime: node
-    plan: starter
-    region: singapore
-    branch: main
-    buildCommand: npm ci && npm run build
-    startCommand: npm run start
-    healthCheckPath: /api/health
-    envVarGroups:
-      - qr-menu-render-staging-secrets
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: qr-menu-render-staging-db
-          property: connectionString
-      - key: PAYMENT_REMINDER_THRESHOLD_DAYS
-        value: "3"
-      - key: AI_DESCRIPTION_DAILY_LIMIT
-        value: "10"
-
-  - type: web
-    name: qr-menu-render-production
-    runtime: node
-    plan: starter
-    region: singapore
-    branch: main
-    buildCommand: npm ci && npm run build
-    startCommand: npm run start
-    healthCheckPath: /api/health
-    envVarGroups:
-      - qr-menu-render-production-secrets
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: qr-menu-render-production-db
-          property: connectionString
       - key: PAYMENT_REMINDER_THRESHOLD_DAYS
         value: "3"
       - key: AI_DESCRIPTION_DAILY_LIMIT
@@ -122,8 +112,7 @@ services:
   # Cron Jobs (specs/001-render-hosting-cutover T011/T012) — same schedule
   # and route contract as qr-menu-dev's vercel.json, verified directly
   # against it (Constitution Principle VII), not re-derived from the
-  # migration plan alone. One pair per environment, sharing that
-  # environment's envVarGroup so CRON_SECRET matches the Web Service's copy.
+  # migration plan alone. Each just curls its own environment's Web Service.
   - type: cron
     name: qr-menu-render-staging-payment-reminders
     runtime: node
@@ -132,8 +121,12 @@ services:
     branch: main
     schedule: "0 9 * * *"
     buildCommand: npm ci
-    envVarGroups:
-      - qr-menu-render-staging-secrets
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: qr-menu-render-staging
+          property: envVarKey
+          envVarKey: CRON_SECRET
     startCommand: >-
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-staging.onrender.com/api/cron/payment-reminders
@@ -146,8 +139,12 @@ services:
     branch: main
     schedule: "0 9 * * *"
     buildCommand: npm ci
-    envVarGroups:
-      - qr-menu-render-staging-secrets
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: qr-menu-render-staging
+          property: envVarKey
+          envVarKey: CRON_SECRET
     startCommand: >-
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-staging.onrender.com/api/cron/subscription-expiry
@@ -160,8 +157,12 @@ services:
     branch: main
     schedule: "0 9 * * *"
     buildCommand: npm ci
-    envVarGroups:
-      - qr-menu-render-production-secrets
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: qr-menu-render-production
+          property: envVarKey
+          envVarKey: CRON_SECRET
     startCommand: >-
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-production.onrender.com/api/cron/payment-reminders
@@ -174,8 +175,12 @@ services:
     branch: main
     schedule: "0 9 * * *"
     buildCommand: npm ci
-    envVarGroups:
-      - qr-menu-render-production-secrets
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: qr-menu-render-production
+          property: envVarKey
+          envVarKey: CRON_SECRET
     startCommand: >-
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-production.onrender.com/api/cron/subscription-expiry
