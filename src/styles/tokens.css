@@ -1,0 +1,82 @@
+/*
+ * Hapag brand tokens — ported unchanged from qr-menu-dev/src/styles/tokens.css.
+ * Single source of truth: consumed by the app (src/app/globals.css, via @theme inline).
+ */
+:root {
+  --background: #ffffff;
+  --foreground: #1b1b18;
+  --card: #ffffff;
+  --card-foreground: #1b1b18;
+  --popover: #ffffff;
+  --popover-foreground: #1b1b18;
+  --primary: #f47b43;
+  --primary-foreground: #ffffff;
+  --secondary: #fce7da;
+  --secondary-foreground: #7a3a17;
+  --muted: #f1f1f1;
+  --muted-foreground: #6b6862;
+  --accent: #f47b43;
+  --accent-foreground: #ffffff;
+  --destructive: #b3261e;
+  --destructive-foreground: #faf7f1;
+  --success: #2f855a;
+  --success-foreground: #faf7f1;
+  --warning: #e3a73b;
+  --warning-foreground: #1b1b18;
+  --border: #e2e2e2;
+  --input: #e2e2e2;
+  --ring: #f47b43;
+  --chart-1: #f47b43;
+  --chart-2: #2f855a;
+  --chart-3: #e3a73b;
+  --chart-4: #c99a52;
+  --chart-5: #6b6862;
+  --radius: 0.625rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1b1b18;
+  --sidebar-primary: #f47b43;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #fce7da;
+  --sidebar-accent-foreground: #7a3a17;
+  --sidebar-border: #e2e2e2;
+  --sidebar-ring: #f47b43;
+}
+
+.dark {
+  --background: #141d18;
+  --foreground: #f1eee6;
+  --card: #1b2620;
+  --card-foreground: #f1eee6;
+  --popover: #1b2620;
+  --popover-foreground: #f1eee6;
+  --primary: #86c3a2;
+  --primary-foreground: #14201a;
+  --secondary: #223229;
+  --secondary-foreground: #f1eee6;
+  --muted: #1f2a24;
+  --muted-foreground: #b7c0b6;
+  --accent: #dcac66;
+  --accent-foreground: #1b1b18;
+  --destructive: #e2534b;
+  --destructive-foreground: #14201a;
+  --success: #6fbf94;
+  --success-foreground: #14201a;
+  --warning: #dcac66;
+  --warning-foreground: #1b1b18;
+  --border: #2b3a32;
+  --input: #2b3a32;
+  --ring: #dcac66;
+  --chart-1: #86c3a2;
+  --chart-2: #6fbf94;
+  --chart-3: #dcac66;
+  --chart-4: #c99a52;
+  --chart-5: #b7c0b6;
+  --sidebar: #1b2620;
+  --sidebar-foreground: #f1eee6;
+  --sidebar-primary: #86c3a2;
+  --sidebar-primary-foreground: #14201a;
+  --sidebar-accent: #223229;
+  --sidebar-accent-foreground: #f1eee6;
+  --sidebar-border: #2b3a32;
+  --sidebar-ring: #dcac66;
+}

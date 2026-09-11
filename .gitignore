@@ -1,0 +1,25 @@
+/.claude
+/CLAUDE.md
+/.specify
+/specs
+
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# Env files — never commit real secrets
+.env
+.env*.local
+
+# Drizzle
+drizzle/
+
+# Logs / OS
+*.log
+.DS_Store
+
