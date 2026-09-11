@@ -1,55 +1,31 @@
-# Render Blueprint (specs/001-render-hosting-cutover, T004/T005).
+# Render Blueprint — FREE-TIER INTERIM DEPLOYMENT.
 #
-# Declares both staging and production as separate services/databases in one
-# file — one source of truth applied to both, per Constitution Principle VII
-# (parity derived from one place, not clicked together twice by hand and
-# risking drift). Plan values below are the real paid target
-# (specs/001-render-hosting-cutover FR-001a); the free-tier feasibility POC
-# (specs/003-render-feasibility-poc) does NOT edit this file — it applies a
-# generated copy with `plan: free` overrides instead (see that spec's
-# research.md), so this file always reflects the actual target
-# configuration, not a temporary experiment.
+# specs/003-render-feasibility-poc, reversed 2026-09-11 (see that spec's
+# Clarifications): with no company budget currently secured, this is no
+# longer a disposable proof-of-concept — it's the project's actual interim
+# environment until render.yaml's paid target can be funded. See
+# docs/known-limitations.md for what that tradeoff actually costs.
 #
-# Secrets shared between a Web Service and its own Cron Jobs (CRON_SECRET,
-# so the cron caller's bearer token actually matches what the route expects)
-# live in an envVarGroup per environment, not `generateValue` on each
-# service independently — two independently generated values would never
-# match each other.
+# Generated from render.yaml with plan values swapped to `free` — kept as a
+# SEPARATE file rather than editing render.yaml in place, so render.yaml
+# always reflects the real target configuration (Constitution Principle
+# VII), not this interim state. When budget is approved, switch to applying
+# render.yaml directly and retire this file.
+#
+# Render's free Postgres is NOT a permanent tier — it expires and is
+# deleted (~30 days), unlike a paid instance. Recreating it periodically is
+# an accepted, recurring operational cost of staying on this file — see
+# docs/known-limitations.md for the recreation steps.
 
 envVarGroups:
-  - name: qr-menu-render-staging-secrets
+  - name: qr-menu-render-interim-secrets
     envVars:
       - key: AUTH_SECRET
         generateValue: true
       - key: CRON_SECRET
         generateValue: true
       - key: NEXT_PUBLIC_SITE_URL
-        sync: false # staging URL, set per-environment
-      - key: CLOUDINARY_CLOUD_NAME
         sync: false
-      - key: CLOUDINARY_API_KEY
-        sync: false
-      - key: CLOUDINARY_API_SECRET
-        sync: false
-      - key: GMAIL_SMTP_USER
-        sync: false
-      - key: GMAIL_SMTP_APP_PASSWORD
-        sync: false
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: DEEPL_API_KEY
-        sync: false
-
-  - name: qr-menu-render-production-secrets
-    envVars:
-      - key: AUTH_SECRET
-        generateValue: true
-      - key: CRON_SECRET
-        generateValue: true
-      - key: NEXT_PUBLIC_SITE_URL
-        sync: false # production domain, set once cutover happens (Phase 5)
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -69,45 +45,22 @@ envVarGroups:
 
 services:
   - type: web
-    name: qr-menu-render-staging
+    name: qr-menu-render-interim
     runtime: node
-    plan: starter
+    plan: free
     region: singapore
-    branch: main
+    branch: render-free-interim
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
     envVarGroups:
-      - qr-menu-render-staging-secrets
+      - qr-menu-render-interim-secrets
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
         fromDatabase:
-          name: qr-menu-render-staging-db
-          property: connectionString
-      - key: PAYMENT_REMINDER_THRESHOLD_DAYS
-        value: "3"
-      - key: AI_DESCRIPTION_DAILY_LIMIT
-        value: "10"
-
-  - type: web
-    name: qr-menu-render-production
-    runtime: node
-    plan: starter
-    region: singapore
-    branch: main
-    buildCommand: npm ci && npm run build
-    startCommand: npm run start
-    healthCheckPath: /api/health
-    envVarGroups:
-      - qr-menu-render-production-secrets
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: qr-menu-render-production-db
+          name: qr-menu-render-interim-db
           property: connectionString
       - key: PAYMENT_REMINDER_THRESHOLD_DAYS
         value: "3"
@@ -115,60 +68,32 @@ services:
         value: "10"
 
 databases:
-  - name: qr-menu-render-staging-db
-    plan: basic
+  - name: qr-menu-render-interim-db
+    plan: free
     region: singapore
 
-  - name: qr-menu-render-production-db
-    plan: basic
-    region: singapore
-
-# Cron Jobs (specs/001-render-hosting-cutover T011/T012) — same schedule and
-# route contract as qr-menu-dev's vercel.json, verified directly against it
-# (Constitution Principle VII), not re-derived from the migration plan alone.
-# One pair per environment, sharing that environment's envVarGroup so
-# CRON_SECRET matches the Web Service's copy.
+# Cron Jobs also run on the free plan here — Render's free cron plan exists
+# specifically for low-frequency jobs like this (daily), so this is a much
+# smaller compromise than the Web Service/Postgres free tiers above.
 crons:
-  - name: qr-menu-render-staging-payment-reminders
+  - name: qr-menu-render-interim-payment-reminders
     runtime: node
-    plan: starter
+    plan: free
     schedule: "0 9 * * *"
     buildCommand: npm ci
     envVarGroups:
-      - qr-menu-render-staging-secrets
+      - qr-menu-render-interim-secrets
     startCommand: >-
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
-      https://qr-menu-render-staging.onrender.com/api/cron/payment-reminders
+      https://qr-menu-render-interim.onrender.com/api/cron/payment-reminders
 
-  - name: qr-menu-render-staging-subscription-expiry
+  - name: qr-menu-render-interim-subscription-expiry
     runtime: node
-    plan: starter
+    plan: free
     schedule: "0 9 * * *"
     buildCommand: npm ci
     envVarGroups:
-      - qr-menu-render-staging-secrets
+      - qr-menu-render-interim-secrets
     startCommand: >-
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
-      https://qr-menu-render-staging.onrender.com/api/cron/subscription-expiry
-
-  - name: qr-menu-render-production-payment-reminders
-    runtime: node
-    plan: starter
-    schedule: "0 9 * * *"
-    buildCommand: npm ci
-    envVarGroups:
-      - qr-menu-render-production-secrets
-    startCommand: >-
-      curl -sf -H "Authorization: Bearer $CRON_SECRET"
-      https://qr-menu-render-production.onrender.com/api/cron/payment-reminders
-
-  - name: qr-menu-render-production-subscription-expiry
-    runtime: node
-    plan: starter
-    schedule: "0 9 * * *"
-    buildCommand: npm ci
-    envVarGroups:
-      - qr-menu-render-production-secrets
-    startCommand: >-
-      curl -sf -H "Authorization: Bearer $CRON_SECRET"
-      https://qr-menu-render-production.onrender.com/api/cron/subscription-expiry
+      https://qr-menu-render-interim.onrender.com/api/cron/subscription-expiry
