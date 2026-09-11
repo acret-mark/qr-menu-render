@@ -15,6 +15,11 @@
 # live in an envVarGroup per environment, not `generateValue` on each
 # service independently — two independently generated values would never
 # match each other.
+#
+# Corrected 2026-09-11 (first real Render Blueprint validation attempt, via
+# render.free.yaml): there is no top-level `crons:` key in Render's
+# Blueprint schema — cron jobs are `services:` entries with `type: cron`,
+# same as `type: web`.
 
 envVarGroups:
   - name: qr-menu-render-staging-secrets
@@ -114,24 +119,17 @@ services:
       - key: AI_DESCRIPTION_DAILY_LIMIT
         value: "10"
 
-databases:
-  - name: qr-menu-render-staging-db
-    plan: basic
-    region: singapore
-
-  - name: qr-menu-render-production-db
-    plan: basic
-    region: singapore
-
-# Cron Jobs (specs/001-render-hosting-cutover T011/T012) — same schedule and
-# route contract as qr-menu-dev's vercel.json, verified directly against it
-# (Constitution Principle VII), not re-derived from the migration plan alone.
-# One pair per environment, sharing that environment's envVarGroup so
-# CRON_SECRET matches the Web Service's copy.
-crons:
-  - name: qr-menu-render-staging-payment-reminders
+  # Cron Jobs (specs/001-render-hosting-cutover T011/T012) — same schedule
+  # and route contract as qr-menu-dev's vercel.json, verified directly
+  # against it (Constitution Principle VII), not re-derived from the
+  # migration plan alone. One pair per environment, sharing that
+  # environment's envVarGroup so CRON_SECRET matches the Web Service's copy.
+  - type: cron
+    name: qr-menu-render-staging-payment-reminders
     runtime: node
     plan: starter
+    region: singapore
+    branch: main
     schedule: "0 9 * * *"
     buildCommand: npm ci
     envVarGroups:
@@ -140,9 +138,12 @@ crons:
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-staging.onrender.com/api/cron/payment-reminders
 
-  - name: qr-menu-render-staging-subscription-expiry
+  - type: cron
+    name: qr-menu-render-staging-subscription-expiry
     runtime: node
     plan: starter
+    region: singapore
+    branch: main
     schedule: "0 9 * * *"
     buildCommand: npm ci
     envVarGroups:
@@ -151,9 +152,12 @@ crons:
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-staging.onrender.com/api/cron/subscription-expiry
 
-  - name: qr-menu-render-production-payment-reminders
+  - type: cron
+    name: qr-menu-render-production-payment-reminders
     runtime: node
     plan: starter
+    region: singapore
+    branch: main
     schedule: "0 9 * * *"
     buildCommand: npm ci
     envVarGroups:
@@ -162,9 +166,12 @@ crons:
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-production.onrender.com/api/cron/payment-reminders
 
-  - name: qr-menu-render-production-subscription-expiry
+  - type: cron
+    name: qr-menu-render-production-subscription-expiry
     runtime: node
     plan: starter
+    region: singapore
+    branch: main
     schedule: "0 9 * * *"
     buildCommand: npm ci
     envVarGroups:
@@ -172,3 +179,12 @@ crons:
     startCommand: >-
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-production.onrender.com/api/cron/subscription-expiry
+
+databases:
+  - name: qr-menu-render-staging-db
+    plan: basic
+    region: singapore
+
+  - name: qr-menu-render-production-db
+    plan: basic
+    region: singapore
