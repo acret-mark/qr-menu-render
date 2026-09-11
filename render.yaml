@@ -9,18 +9,21 @@
 # `render-free-interim` branch instead of editing this file, so this file
 # always reflects the actual target configuration, not the interim state.
 #
-# Corrected twice against Render's real Blueprint validation (2026-09-11):
+# Corrected three times against Render's real Blueprint validation
+# (2026-09-11):
 # 1. No top-level `crons:` key — cron jobs are `services:` entries with
 #    `type: cron`, same shape as `type: web`.
-# 2. No `envVarGroups:` reference at the service level (that field only
-#    exists inside the `projects:`/`environments:` grouping structure, which
-#    this flat Blueprint doesn't use). Cross-service secret sharing
-#    (CRON_SECRET, so a Cron Job's bearer token matches what its Web
-#    Service expects) uses `fromService` instead — see the cron entries
-#    below. Each cron job only declares CRON_SECRET; it has no other reason
-#    to need DATABASE_URL, GMAIL_SMTP_*, etc., since it's just a `curl` call
-#    against its Web Service, not a process that touches those services
-#    itself.
+# 2. No `envVarGroups:` reference at the service level (only works inside
+#    the `projects:`/`environments:` grouping structure, unused here).
+# 3. `fromService` cannot reference an arbitrary custom env var on another
+#    service (Render's live validator rejected this — "cannot refer to
+#    property and env var" — despite what the docs' `fromService` example
+#    suggested); it's for fixed service properties like `host`/
+#    `connectionString`, not sharing a value like CRON_SECRET across
+#    services. CRON_SECRET below is therefore `sync: false` (manually
+#    entered) on every service that needs it — enter the SAME value on
+#    each Web Service and its two Cron Jobs so the bearer token actually
+#    matches what the route expects.
 
 services:
   - type: web
@@ -42,7 +45,7 @@ services:
       - key: AUTH_SECRET
         generateValue: true
       - key: CRON_SECRET
-        generateValue: true
+        sync: false # set the SAME value here and on both staging cron jobs below
       - key: NEXT_PUBLIC_SITE_URL
         sync: false # staging URL, set per-environment
       - key: CLOUDINARY_CLOUD_NAME
@@ -85,7 +88,7 @@ services:
       - key: AUTH_SECRET
         generateValue: true
       - key: CRON_SECRET
-        generateValue: true
+        sync: false # set the SAME value here and on both production cron jobs below
       - key: NEXT_PUBLIC_SITE_URL
         sync: false # production domain, set once cutover happens (Phase 5)
       - key: CLOUDINARY_CLOUD_NAME
@@ -123,10 +126,7 @@ services:
     buildCommand: npm ci
     envVars:
       - key: CRON_SECRET
-        fromService:
-          name: qr-menu-render-staging
-          property: envVarKey
-          envVarKey: CRON_SECRET
+        sync: false # must match qr-menu-render-staging's value exactly
     startCommand: >-
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-staging.onrender.com/api/cron/payment-reminders
@@ -141,10 +141,7 @@ services:
     buildCommand: npm ci
     envVars:
       - key: CRON_SECRET
-        fromService:
-          name: qr-menu-render-staging
-          property: envVarKey
-          envVarKey: CRON_SECRET
+        sync: false # must match qr-menu-render-staging's value exactly
     startCommand: >-
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-staging.onrender.com/api/cron/subscription-expiry
@@ -159,10 +156,7 @@ services:
     buildCommand: npm ci
     envVars:
       - key: CRON_SECRET
-        fromService:
-          name: qr-menu-render-production
-          property: envVarKey
-          envVarKey: CRON_SECRET
+        sync: false # must match qr-menu-render-production's value exactly
     startCommand: >-
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-production.onrender.com/api/cron/payment-reminders
@@ -177,10 +171,7 @@ services:
     buildCommand: npm ci
     envVars:
       - key: CRON_SECRET
-        fromService:
-          name: qr-menu-render-production
-          property: envVarKey
-          envVarKey: CRON_SECRET
+        sync: false # must match qr-menu-render-production's value exactly
     startCommand: >-
       curl -sf -H "Authorization: Bearer $CRON_SECRET"
       https://qr-menu-render-production.onrender.com/api/cron/subscription-expiry
