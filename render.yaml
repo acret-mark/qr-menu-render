@@ -25,6 +25,12 @@
 #    see docs/known-limitations.md, which documents this as a real, current
 #    gap: those two jobs do not run against this environment at all.
 #    CRON_SECRET is dropped too — nothing on this branch calls those routes.
+# 4. Render's build sets NODE_ENV=production, which makes plain `npm ci`
+#    skip devDependencies — `next build` needs `@tailwindcss/postcss` from
+#    that list, so it failed immediately ("Cannot find module
+#    '@tailwindcss/postcss'"). `buildCommand` now forces
+#    `npm ci --include=dev`; verified locally (reproduced the failure,
+#    then confirmed the fix builds clean) before pushing.
 
 services:
   - type: web
@@ -33,7 +39,7 @@ services:
     plan: free
     region: singapore
     branch: render-free-interim
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
     envVars:
