@@ -1,7 +1,8 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { categories } from "@/lib/db/schema";
+import { categories, type items as itemsTable } from "@/lib/db/schema";
 import { getOwnBusiness } from "./businesses";
+import { getPublicDisplayedItems } from "./items";
 
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = { name: string };
@@ -129,4 +130,47 @@ export async function reorderOwnCategory(
   ]);
 
   return { ok: true };
+}
+
+export type PublicCategoryWithItems = {
+  id: string;
+  name: string;
+  items: (typeof itemsTable.$inferSelect)[];
+};
+
+/**
+ * Public-scoped (contracts/data-access-layer.md category 3,
+ * specs/007-public-menu-display's public-visibility-boundary contract).
+ * `businessId` MUST already come from a non-null `getPublicBusinessBySlug`
+ * result in the same request — this function does not re-check status.
+ * Categories with zero customer-visible items are dropped (matching
+ * qr-menu-dev's getMenuData() — research.md Decision 2), never returned as
+ * an empty-looking tab.
+ */
+export async function getPublicCategoriesWithItems(
+  businessId: string
+): Promise<PublicCategoryWithItems[]> {
+  const [categoryRows, itemRows] = await Promise.all([
+    db
+      .select()
+      .from(categories)
+      .where(eq(categories.businessId, businessId))
+      .orderBy(categories.sortOrder),
+    getPublicDisplayedItems(businessId),
+  ]);
+
+  const itemsByCategory = new Map<string, (typeof itemsTable.$inferSelect)[]>();
+  for (const item of itemRows) {
+    const list = itemsByCategory.get(item.categoryId) ?? [];
+    list.push(item);
+    itemsByCategory.set(item.categoryId, list);
+  }
+
+  return categoryRows
+    .map((category) => ({
+      id: category.id,
+      name: category.name,
+      items: (itemsByCategory.get(category.id) ?? []).sort((a, b) => a.sortOrder - b.sortOrder),
+    }))
+    .filter((category) => category.items.length > 0);
 }
