@@ -31,7 +31,7 @@ export default async function DashboardPage() {
         <Link href="/categories" className="rounded-lg border border-border p-4 hover:bg-muted">
           Categories
         </Link>
-        <Link href="/menu" className="rounded-lg border border-border p-4 hover:bg-muted">
+        <Link href="/dashboard/menu" className="rounded-lg border border-border p-4 hover:bg-muted">
           Menu
         </Link>
         <Link href="/qr" className="rounded-lg border border-border p-4 hover:bg-muted">

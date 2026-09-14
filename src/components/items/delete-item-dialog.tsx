@@ -34,7 +34,7 @@ export function DeleteItemDialog({
     await deleteItem({ id: itemId });
     setDeleting(false);
     onOpenChange(false);
-    router.push("/menu");
+    router.push("/dashboard/menu");
   }
 
   return (

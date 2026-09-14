@@ -83,7 +83,7 @@ export function MenuItemRow({ item }: { item: MenuItemRowItem }) {
       </label>
 
       <Link
-        href={`/menu/${item.id}/edit`}
+        href={`/dashboard/menu/${item.id}/edit`}
         aria-label={`Edit ${item.name}`}
         className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
       >

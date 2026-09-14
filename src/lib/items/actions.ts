@@ -116,7 +116,7 @@ export async function saveItem(input: {
     );
   }
 
-  revalidatePath("/menu");
+  revalidatePath("/dashboard/menu");
   return { ok: true, id: item.id };
 }
 
@@ -125,7 +125,7 @@ export type DeleteItemResult = { ok: boolean };
 export async function deleteItem(input: { id: string }): Promise<DeleteItemResult> {
   const user = await requireUser();
   const ok = await deleteOwnItem(user.id, input.id);
-  revalidatePath("/menu");
+  revalidatePath("/dashboard/menu");
   return { ok };
 }
 
@@ -137,7 +137,7 @@ export async function setItemSoldOut(input: {
 }): Promise<SetItemSoldOutResult> {
   const user = await requireUser();
   const item = await setOwnItemSoldOut(user.id, input.id, input.isSoldOut);
-  if (item) revalidatePath("/menu");
+  if (item) revalidatePath("/dashboard/menu");
   return { ok: !!item };
 }
 
