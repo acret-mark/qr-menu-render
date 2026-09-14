@@ -63,6 +63,33 @@ export async function getOwnCategoryTranslations(ownerId: string): Promise<Categ
     .where(eq(categoryTranslations.businessId, business.id));
 }
 
+export async function upsertOwnCategoryTranslation(
+  ownerId: string,
+  input: {
+    categoryId: string;
+    languageCode: DisplayLanguage;
+    translatedName: string | null;
+    sourceHash: string;
+  }
+): Promise<CategoryTranslation | null> {
+  const business = await getOwnBusiness(ownerId);
+  if (!business) return null;
+
+  const [row] = await db
+    .insert(categoryTranslations)
+    .values({ businessId: business.id, ...input })
+    .onConflictDoUpdate({
+      target: [categoryTranslations.categoryId, categoryTranslations.languageCode],
+      set: {
+        translatedName: input.translatedName,
+        sourceHash: input.sourceHash,
+        translatedAt: new Date(),
+      },
+    })
+    .returning();
+  return row;
+}
+
 export async function getOwnIngredientTranslations(
   ownerId: string
 ): Promise<IngredientTranslation[]> {
