@@ -34,4 +34,6 @@ node .github/scripts/check-structure.mjs
 - [`docs/contributing.md`](docs/contributing.md) — the data-access-layer rule (read this before
   touching any tenant-scoped table; there's no database-level RLS here, unlike `qr-menu-dev`)
 - [`docs/known-limitations.md`](docs/known-limitations.md) — current hosting-tier limitation
+- [`docs/render-hosting-report.md`](docs/render-hosting-report.md) — every blocker/limitation hit
+  (or anticipated) moving hosting from Vercel + Supabase to Render, with what it took to fix each
 - `specs/*/spec.md` — one Spec Kit feature spec per unit of migration/product work
