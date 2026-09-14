@@ -53,6 +53,12 @@ services:
         generateValue: true
       - key: NEXT_PUBLIC_SITE_URL
         sync: false
+      - key: AUTH_URL
+        # Same value as NEXT_PUBLIC_SITE_URL (https://qr-menu-render-interim.onrender.com).
+        # trustHost alone only covers CSRF/host validation — confirmed live
+        # that without AUTH_URL, post-login redirects went to
+        # https://localhost:10000 instead of the real domain.
+        sync: false
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
