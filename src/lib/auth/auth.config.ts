@@ -11,6 +11,13 @@ import { verifyPassword } from "./password";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Found live on the first real deployment (2026-09-14): Auth.js v5
+  // rejects requests with a 500 ("server configuration") on any platform
+  // that sits behind a proxy/CDN it doesn't recognize by default — Render
+  // is exactly this (fronted by Cloudflare, per the response headers on
+  // the failing request). trustHost: true is Auth.js's documented fix for
+  // deploying to Render/Railway/Fly.io/Docker/etc.
+  trustHost: true,
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
