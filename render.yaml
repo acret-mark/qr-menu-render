@@ -24,6 +24,15 @@
 #    entered) on every service that needs it — enter the SAME value on
 #    each Web Service and its two Cron Jobs so the bearer token actually
 #    matches what the route expects.
+#
+# Corrected a fourth time (first real deploy attempt, not just Blueprint
+# validation): Render sets `NODE_ENV=production` for the build step, which
+# makes plain `npm ci` skip `devDependencies` — but `next build` needs
+# `@tailwindcss/postcss` (and would have hit `typescript`/`@types/*` right
+# after) from that list. `buildCommand` now forces `npm ci --include=dev`
+# rather than relying on which specific packages get reclassified into
+# `dependencies` — more robust against the next dev tool that turns out to
+# be needed at build time too.
 
 services:
   - type: web
@@ -32,7 +41,7 @@ services:
     plan: starter
     region: singapore
     branch: main
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
     envVars:
@@ -75,7 +84,7 @@ services:
     plan: starter
     region: singapore
     branch: main
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
     envVars:
