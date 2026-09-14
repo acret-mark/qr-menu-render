@@ -57,6 +57,11 @@ services:
         sync: false # set the SAME value here and on both staging cron jobs below
       - key: NEXT_PUBLIC_SITE_URL
         sync: false # staging URL, set per-environment
+      - key: AUTH_URL
+        sync: false # same staging URL — Auth.js needs this explicitly for
+        # correct redirect construction; trustHost alone only covers
+        # CSRF/host validation, not redirect URLs (confirmed live: without
+        # this, post-login redirects went to https://localhost:10000)
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -100,6 +105,9 @@ services:
         sync: false # set the SAME value here and on both production cron jobs below
       - key: NEXT_PUBLIC_SITE_URL
         sync: false # production domain, set once cutover happens (Phase 5)
+      - key: AUTH_URL
+        sync: false # same production domain — see the staging entry above
+        # for why this is required alongside trustHost
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
