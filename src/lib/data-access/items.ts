@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { items } from "@/lib/db/schema";
 import { getOwnBusiness } from "./businesses";
@@ -8,6 +8,7 @@ export type NewItem = {
   categoryId: string;
   name: string;
   description?: string;
+  photoUrl?: string;
   price: string;
 };
 
@@ -17,9 +18,20 @@ export async function getOwnItems(ownerId: string): Promise<Item[]> {
   return db.select().from(items).where(eq(items.businessId, business.id));
 }
 
+/** New items append to the end within their own category (matching
+ * qr-menu-dev's `max(sort_order)+1` scoped to category_id, not
+ * business-wide — specs/005-menu-items research.md Decision 2). */
 export async function createOwnItem(ownerId: string, input: NewItem): Promise<Item | null> {
   const business = await getOwnBusiness(ownerId);
   if (!business) return null;
+
+  const [last] = await db
+    .select({ sortOrder: items.sortOrder })
+    .from(items)
+    .where(and(eq(items.businessId, business.id), eq(items.categoryId, input.categoryId)))
+    .orderBy(desc(items.sortOrder))
+    .limit(1);
+  const nextSortOrder = (last?.sortOrder ?? -1) + 1;
 
   const [item] = await db
     .insert(items)
@@ -28,7 +40,9 @@ export async function createOwnItem(ownerId: string, input: NewItem): Promise<It
       categoryId: input.categoryId,
       name: input.name,
       description: input.description,
+      photoUrl: input.photoUrl,
       price: input.price,
+      sortOrder: nextSortOrder,
     })
     .returning();
   return item;
@@ -49,7 +63,7 @@ export async function getOwnItemById(ownerId: string, itemId: string): Promise<I
 export async function updateOwnItem(
   ownerId: string,
   itemId: string,
-  input: Partial<Pick<NewItem, "name" | "description" | "price">> & {
+  input: Partial<Pick<NewItem, "categoryId" | "name" | "description" | "photoUrl" | "price">> & {
     isDisplayed?: boolean;
     isSoldOut?: boolean;
     isBestSeller?: boolean;
@@ -61,6 +75,40 @@ export async function updateOwnItem(
   const [item] = await db
     .update(items)
     .set(input)
+    .where(and(eq(items.id, itemId), eq(items.businessId, business.id)))
+    .returning();
+  return item ?? null;
+}
+
+/** Returns false if the item doesn't belong to the caller's own business (or
+ * the caller has no business) — the delete simply affects zero rows. */
+export async function deleteOwnItem(ownerId: string, itemId: string): Promise<boolean> {
+  const business = await getOwnBusiness(ownerId);
+  if (!business) return false;
+
+  const deleted = await db
+    .delete(items)
+    .where(and(eq(items.id, itemId), eq(items.businessId, business.id)))
+    .returning({ id: items.id });
+  return deleted.length > 0;
+}
+
+/** Narrow, single-field fast path for the item list's inline Available
+ * toggle (spec FR-020, SC-006) — deliberately separate from updateOwnItem
+ * so a future change to the general edit-form save can never accidentally
+ * slow down or complicate this one path that has to feel instant
+ * (research.md Decision 1). */
+export async function setOwnItemSoldOut(
+  ownerId: string,
+  itemId: string,
+  isSoldOut: boolean
+): Promise<Item | null> {
+  const business = await getOwnBusiness(ownerId);
+  if (!business) return null;
+
+  const [item] = await db
+    .update(items)
+    .set({ isSoldOut })
     .where(and(eq(items.id, itemId), eq(items.businessId, business.id)))
     .returning();
   return item ?? null;
