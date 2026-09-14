@@ -83,7 +83,7 @@ export function ItemForm({ categories, item }: { categories: Category[]; item?: 
       return;
     }
 
-    router.push("/menu");
+    router.push("/dashboard/menu");
   }
 
   return (
