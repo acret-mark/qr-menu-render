@@ -77,6 +77,7 @@ const SECRET_PATTERNS = [
 const ALLOWED_SECRET_FILES = new Set([
   join(SRC, "lib", "db", "client.ts"),
   join(SRC, "lib", "email", "google-smtp-client.ts"),
+  join(SRC, "lib", "cloudinary", "client.ts"),
 ]);
 for (const file of codeFiles) {
   if (ALLOWED_SECRET_FILES.has(file)) continue;
