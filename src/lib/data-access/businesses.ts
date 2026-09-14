@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { businesses } from "@/lib/db/schema";
 import type { businesses as BusinessesTable } from "@/lib/db/schema";
@@ -55,6 +55,25 @@ export async function getOwnBusiness(ownerId: string): Promise<Business | null> 
 export async function slugExists(slug: string): Promise<boolean> {
   const [row] = await db.select({ id: businesses.id }).from(businesses).where(eq(businesses.slug, slug)).limit(1);
   return !!row;
+}
+
+// ---- Public-scoped (contracts/data-access-layer.md category 3) ----
+
+/**
+ * specs/007-public-menu-display's public-visibility-boundary contract: the
+ * ONE place `status IN ('active','trial')` is checked. Returns null for a
+ * nonexistent slug or any other status — this is the entire replacement for
+ * qr-menu-dev's RLS policies on this path (Constitution Principle II).
+ * Every other public function in this feature trusts a businessId that
+ * already came from a non-null result of this call; none re-check status.
+ */
+export async function getPublicBusinessBySlug(slug: string): Promise<Business | null> {
+  const [business] = await db
+    .select()
+    .from(businesses)
+    .where(and(eq(businesses.slug, slug), inArray(businesses.status, ["active", "trial"])))
+    .limit(1);
+  return business ?? null;
 }
 
 // ---- Admin-scoped (contracts/data-access-layer.md category 2) ----
