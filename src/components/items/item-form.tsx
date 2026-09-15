@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveItem } from "@/lib/items/actions";
+import { syncItemIngredientsAction } from "@/lib/ingredients/actions";
 import { Button } from "@/components/ui/button";
 import { ItemPhotoUploader } from "@/components/items/item-photo-uploader";
 import { DeleteItemDialog } from "@/components/items/delete-item-dialog";
+import { IngredientTagInput, type IngredientOption } from "@/components/items/ingredient-tag-input";
 import { cn } from "@/lib/utils";
 
 type Category = { id: string; name: string };
@@ -27,7 +29,17 @@ function isPriceValid(value: string): boolean {
   return Number.isFinite(n) && n >= 0;
 }
 
-export function ItemForm({ categories, item }: { categories: Category[]; item?: ItemFormItem }) {
+export function ItemForm({
+  categories,
+  item,
+  allIngredients = [],
+  initialIngredients = [],
+}: {
+  categories: Category[];
+  item?: ItemFormItem;
+  allIngredients?: IngredientOption[];
+  initialIngredients?: IngredientOption[];
+}) {
   const router = useRouter();
   const isEdit = !!item;
 
@@ -39,6 +51,8 @@ export function ItemForm({ categories, item }: { categories: Category[]; item?: 
   const [isDisplayed, setIsDisplayed] = useState(item?.isDisplayed ?? true);
   const [isSoldOut, setIsSoldOut] = useState(item?.isSoldOut ?? false);
   const [isBestSeller, setIsBestSeller] = useState(item?.isBestSeller ?? false);
+  const [ingredientOptions, setIngredientOptions] = useState<IngredientOption[]>(allIngredients);
+  const [ingredients, setIngredients] = useState<IngredientOption[]>(initialIngredients);
 
   const [isPhotoUploading, setIsPhotoUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,10 +92,20 @@ export function ItemForm({ categories, item }: { categories: Category[]; item?: 
         "not-authenticated": "Your session expired — please sign in again.",
         "no-business": "No business found for this account.",
         "not-found": "Couldn't save — try again.",
+        locked: "Your subscription has expired. Renew to keep editing your menu.",
       };
       setError(messages[result.reason] ?? "Couldn't save — try again.");
       return;
     }
+
+    // specs/023-menu-item-ingredients: attaching/removing ingredients is
+    // part of the same save action (spec Assumptions) — reconciled here,
+    // right after the item itself is guaranteed to exist with a real id
+    // (either the edited item's own id, or the id saveItem just created).
+    await syncItemIngredientsAction(
+      item?.id ?? result.id,
+      ingredients.map((i) => i.id)
+    );
 
     router.push("/dashboard/menu");
   }
@@ -162,6 +186,13 @@ export function ItemForm({ categories, item }: { categories: Category[]; item?: 
           className="rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
+
+      <IngredientTagInput
+        allIngredients={ingredientOptions}
+        onAllIngredientsChange={setIngredientOptions}
+        selected={ingredients}
+        onSelectedChange={setIngredients}
+      />
 
       <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
         <label className="flex items-center justify-between gap-4 text-sm font-medium">

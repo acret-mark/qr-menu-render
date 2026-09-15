@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOwnBusiness } from "@/lib/data-access/businesses";
 import { getOwnCategories } from "@/lib/data-access/categories";
+import { getOwnIngredients } from "@/lib/data-access/ingredients";
 import { getSubscriptionAccess } from "@/lib/subscriptions/access-gate";
 import { ItemForm } from "@/components/items/item-form";
 
@@ -38,7 +39,10 @@ export default async function NewItemPage() {
     }
   }
 
-  const categories = await getOwnCategories(user.id);
+  const [categories, allIngredients] = await Promise.all([
+    getOwnCategories(user.id),
+    getOwnIngredients(user.id),
+  ]);
 
   if (categories.length === 0) {
     return (
@@ -58,7 +62,7 @@ export default async function NewItemPage() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
       <h1 className="text-2xl font-semibold">Add item</h1>
-      <ItemForm categories={categories} />
+      <ItemForm categories={categories} allIngredients={allIngredients} />
     </div>
   );
 }

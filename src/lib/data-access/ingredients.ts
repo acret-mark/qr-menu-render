@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { ingredients, itemIngredients } from "@/lib/db/schema";
 import { getOwnBusiness } from "./businesses";
@@ -46,6 +46,33 @@ export async function addOwnItemIngredient(
   return true;
 }
 
+/**
+ * specs/023-menu-item-ingredients FR-006, research.md Decision 2. Mirrors
+ * addOwnItemIngredient's exact trust chain and three-column composite
+ * match (item, ingredient, business) — a cross-business removal attempt
+ * simply matches zero rows, even if an id were somehow guessed.
+ */
+export async function removeOwnItemIngredient(
+  ownerId: string,
+  itemId: string,
+  ingredientId: string
+): Promise<boolean> {
+  const business = await getOwnBusiness(ownerId);
+  if (!business) return false;
+
+  const deleted = await db
+    .delete(itemIngredients)
+    .where(
+      and(
+        eq(itemIngredients.itemId, itemId),
+        eq(itemIngredients.ingredientId, ingredientId),
+        eq(itemIngredients.businessId, business.id)
+      )
+    )
+    .returning({ itemId: itemIngredients.itemId });
+  return deleted.length > 0;
+}
+
 export type PublicItemIngredient = { itemId: string; ingredientId: string; name: string };
 
 /**
@@ -60,6 +87,11 @@ export type PublicItemIngredient = { itemId: string; ingredientId: string; name:
 export async function getPublicItemIngredients(
   businessId: string
 ): Promise<PublicItemIngredient[]> {
+  // specs/023-menu-item-ingredients FR-011/research.md Decision 3: ordered
+  // by createdAt — each attachment is its own INSERT (addOwnItemIngredient
+  // never batches), so createdAt naturally reflects attachment order. This
+  // was previously missing entirely, returning rows in whatever order
+  // Postgres happened to produce them.
   const rows = await db
     .select({
       itemId: itemIngredients.itemId,
@@ -68,6 +100,7 @@ export async function getPublicItemIngredients(
     })
     .from(itemIngredients)
     .innerJoin(ingredients, eq(ingredients.id, itemIngredients.ingredientId))
-    .where(eq(itemIngredients.businessId, businessId));
+    .where(eq(itemIngredients.businessId, businessId))
+    .orderBy(asc(itemIngredients.createdAt));
   return rows;
 }

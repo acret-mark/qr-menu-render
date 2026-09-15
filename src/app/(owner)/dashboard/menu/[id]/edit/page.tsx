@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getOwnBusiness } from "@/lib/data-access/businesses";
 import { getOwnCategories } from "@/lib/data-access/categories";
 import { getOwnItemById } from "@/lib/data-access/items";
+import { getOwnIngredients, getOwnItemIngredients } from "@/lib/data-access/ingredients";
 import { getSubscriptionAccess } from "@/lib/subscriptions/access-gate";
 import { ItemForm } from "@/components/items/item-form";
 
@@ -41,9 +42,10 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
   }
 
   const { id } = await params;
-  const [item, categories] = await Promise.all([
+  const [item, categories, allIngredients] = await Promise.all([
     getOwnItemById(user.id, id),
     getOwnCategories(user.id),
+    getOwnIngredients(user.id),
   ]);
 
   if (!item) {
@@ -55,10 +57,21 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
     );
   }
 
+  const itemIngredientRows = await getOwnItemIngredients(user.id, item.id);
+  const ingredientById = new Map(allIngredients.map((i) => [i.id, i]));
+  const initialIngredients = itemIngredientRows
+    .map((row) => ingredientById.get(row.ingredientId))
+    .filter((i): i is (typeof allIngredients)[number] => !!i);
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
       <h1 className="text-2xl font-semibold">Edit item</h1>
-      <ItemForm categories={categories} item={item} />
+      <ItemForm
+        categories={categories}
+        item={item}
+        allIngredients={allIngredients}
+        initialIngredients={initialIngredients}
+      />
     </div>
   );
 }
