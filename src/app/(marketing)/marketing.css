@@ -1,0 +1,292 @@
+/*
+ * Marketing-homepage-only design tokens (specs/030-marketing-homepage).
+ * qr-menu-render's constitution has no project-wide design-token
+ * restriction for this to be an exception to (research.md Decision 5) —
+ * everything here is scoped under `.marketing-page` purely so it can never
+ * leak into any other route's styling, mirroring qr-menu-dev's own
+ * `design-reference/marketing/marketing.css`'s `.mkt-page` scoping.
+ *
+ * Values ported directly from that design reference (itself sampled
+ * pixel-by-pixel from the original mockups) — not eyeballed.
+ */
+/* Smooth-scrolls #about/#features/#pricing/#faq anchor jumps from the nav
+ * and footer links, gated behind prefers-reduced-motion — matches
+ * design-reference/marketing/marketing.css exactly. */
+@media (prefers-reduced-motion: no-preference) {
+  .marketing-page {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Clears the sticky nav bar's own height so a jump doesn't land with the
+ * section heading tucked underneath it. */
+.marketing-page #about,
+.marketing-page #features,
+.marketing-page #pricing,
+.marketing-page #faq {
+  scroll-margin-top: 90px;
+}
+
+.marketing-page {
+  --mkt-orange: #f37342;
+  --mkt-orange-deep: #ea5f28;
+  --mkt-ink: #34312c;
+  --mkt-muted: #7a766e;
+  --mkt-bg: #ffffff;
+  --mkt-peach: #fff5f3;
+  --mkt-card: #f7f7f7;
+  --mkt-border: #e8e4e1;
+  --mkt-radius-card: 20px;
+  --mkt-radius-pill: 999px;
+  --mkt-shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.22);
+  --mkt-shadow-md: 0 16px 32px -8px rgba(0, 0, 0, 0.35);
+
+  background: var(--mkt-bg);
+  color: var(--mkt-ink);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.marketing-page h1,
+.marketing-page h2,
+.marketing-page h3 {
+  font-weight: 800;
+}
+
+.marketing-page h1,
+.marketing-page h2 {
+  font-family: var(--font-fraunces), Georgia, serif;
+}
+
+.marketing-page h3 {
+  font-family: var(--font-playfair-display), Georgia, serif;
+}
+
+.marketing-page p {
+  font-family: var(--font-bricolage), var(--font-inter), -apple-system, sans-serif;
+  line-height: 1.7;
+}
+
+/* Shared section heading — used by Key Features/Steps/Pricing/FAQ, matching
+ * design-reference/marketing/marketing.css's `.mkt-section-head` exactly:
+ * a flat 2.4rem heading (NOT responsive — the reference never scales this
+ * down for mobile, unlike the earlier Tailwind text-3xl/text-4xl approach
+ * this replaces). */
+.marketing-page .mkt-section-head {
+  max-width: 640px;
+  margin: 0 auto 56px;
+  text-align: center;
+}
+
+.marketing-page .mkt-section-head h2 {
+  font-size: 2.4rem;
+  line-height: 1.15;
+}
+
+.marketing-page .mkt-section-head p {
+  margin-top: 14px;
+  color: var(--mkt-muted);
+  font-size: 1.05rem;
+}
+
+/* Steps connecting line — a pure CSS ::before on the grid itself (no real
+ * DOM element), spanning circle-1's center to circle-3's center. The
+ * circles (opaque fill, z-index above the line) sit on top and cover the
+ * segment that would run through them, so only the two gap-dashes show. */
+.marketing-page .mkt-steps-grid::before {
+  content: "";
+  display: none;
+  position: absolute;
+  top: 28px;
+  left: calc(100% / 6);
+  right: calc(100% / 6);
+  height: 2px;
+  background: var(--mkt-orange);
+  z-index: 0;
+}
+
+@media (min-width: 860px) {
+  .marketing-page .mkt-steps-grid::before {
+    display: block;
+  }
+}
+
+/* FAQ no-JS fallback: FaqSection's JS drives the answer's max-height via an
+ * inline style, which always wins over this class-based rule when JS is
+ * active (inline beats any external stylesheet rule regardless of
+ * specificity). This rule only matters if JS fails entirely — the native
+ * `[open]` toggle still works then (FaqSection syncs the real `open`
+ * attribute), but without this, the answer's default `max-h-0` Tailwind
+ * class would keep clipping it even after `[open]` is set. */
+.marketing-page details.mkt-faq-item[open] > .mkt-faq-answer-wrap {
+  max-height: none;
+}
+
+/* Hero entrance — plays once on initial load, not scroll-triggered (the
+ * hero is already in view when the page loads). Each direct child of
+ * .mkt-hero-copy (scan icon, headline, lede, CTA row) fades+rises with a
+ * staggered delay; the desktop visual pops in on the same timeline. Matches
+ * design-reference/marketing/marketing.css's `.mkt-hero-copy`/
+ * `.mkt-hero-visual` entrance exactly. */
+@keyframes mkt-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mkt-hero-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .marketing-page .mkt-hero-copy > * {
+    opacity: 0;
+    animation: mkt-hero-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .marketing-page .mkt-hero-copy > *:nth-child(1) {
+    animation-delay: 0.05s;
+  }
+  .marketing-page .mkt-hero-copy > *:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .marketing-page .mkt-hero-copy > *:nth-child(3) {
+    animation-delay: 0.25s;
+  }
+  .marketing-page .mkt-hero-copy > *:nth-child(4) {
+    animation-delay: 0.35s;
+  }
+  .marketing-page .mkt-hero-visual {
+    opacity: 0;
+    animation: mkt-hero-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: 0.25s;
+  }
+  /* Scan icon (mobile-only — the only hero entrance visible below 1024px,
+   * since .mkt-hero-visual is desktop-only) pops in like the visual, not
+   * the plain fade+rise every other .mkt-hero-copy child uses. Equal
+   * specificity to `.mkt-hero-copy > *` (one class each) — declared after
+   * it, so it wins for the properties both touch, same as the reference.
+   * Missing this made the mobile hero read as having no entrance
+   * animation, since the fade+rise alone is easy to miss. */
+  .marketing-page .mkt-hero-scan-icon {
+    opacity: 0;
+    animation: mkt-hero-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: 0.05s;
+  }
+}
+
+/* Scan line — reads as a laser sweeping across the QR code, glowing and
+ * moving up/down ping-pong style rather than sitting static. Was missing
+ * from the built SVG entirely (the corner brackets and dot pattern were
+ * there, but not this element). */
+.marketing-page .mkt-scan-line {
+  filter:
+    drop-shadow(0 0 3px currentColor)
+    drop-shadow(0 0 8px color-mix(in srgb, currentColor 70%, transparent));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .marketing-page .mkt-scan-line {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: mkt-scan-sweep 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes mkt-scan-sweep {
+  0%,
+  100% {
+    transform: translateY(-20px);
+  }
+  50% {
+    transform: translateY(20px);
+  }
+}
+
+/* Scroll-reveal — fully reversible (re-hides scrolling back out of view),
+ * matching the design reference's own behavior. Skips entirely for
+ * prefers-reduced-motion so there's nothing hidden by default that could
+ * get stuck if JS fails to load.
+ *
+ * Applied to `.mkt-section-head` and individual grid/list items (each
+ * card, step, price card, FAQ item) — NOT to the whole outer `<section>` —
+ * matching the reference's actual class placement exactly (found via a
+ * direct grep of m-01-landing.html; the earlier build had it on the outer
+ * section everywhere, which reveals a whole section as one block instead
+ * of each item individually). */
+@media (prefers-reduced-motion: no-preference) {
+  .marketing-page .mkt-reveal {
+    opacity: 0;
+    transform: translateY(22px);
+    transition:
+      opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .marketing-page .mkt-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Per-group stagger — each grid/list's own children count from 1,
+   * independent of any other group's stagger on the page. Class names
+   * match the reference's grid container classes exactly. */
+  .marketing-page .mkt-feature-grid > .mkt-reveal:nth-child(1),
+  .marketing-page .mkt-steps-grid > .mkt-reveal:nth-child(1),
+  .marketing-page .mkt-pricing-grid > .mkt-reveal:nth-child(1),
+  .marketing-page .mkt-faq-list > .mkt-reveal:nth-child(1),
+  .marketing-page .mkt-about-inner > .mkt-reveal:nth-child(1) {
+    transition-delay: 0s;
+  }
+  .marketing-page .mkt-feature-grid > .mkt-reveal:nth-child(2),
+  .marketing-page .mkt-steps-grid > .mkt-reveal:nth-child(2),
+  .marketing-page .mkt-pricing-grid > .mkt-reveal:nth-child(2),
+  .marketing-page .mkt-faq-list > .mkt-reveal:nth-child(2),
+  .marketing-page .mkt-about-inner > .mkt-reveal:nth-child(2) {
+    transition-delay: 0.1s;
+  }
+  .marketing-page .mkt-feature-grid > .mkt-reveal:nth-child(3),
+  .marketing-page .mkt-steps-grid > .mkt-reveal:nth-child(3),
+  .marketing-page .mkt-faq-list > .mkt-reveal:nth-child(3) {
+    transition-delay: 0.2s;
+  }
+  .marketing-page .mkt-faq-list > .mkt-reveal:nth-child(4) {
+    transition-delay: 0.3s;
+  }
+}
+
+/* mkt-pop — cards/images that pop-scale in on reveal instead of the plain
+ * fade+rise every other .mkt-reveal element uses (about-visual, feature
+ * cards, price cards, cta-visual). Carries .mkt-reveal too (same
+ * IntersectionObserver/.is-visible toggle) — declared after .mkt-reveal so
+ * it wins the cascade for the properties both touch, same as the
+ * reference. */
+.marketing-page .mkt-pop {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .marketing-page .mkt-pop {
+    opacity: 0;
+    transform: scale(0.7);
+    transition:
+      opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+      transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .marketing-page .mkt-pop.is-visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+

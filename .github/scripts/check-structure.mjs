@@ -122,6 +122,7 @@ const ALLOWED_APP_FILES = new Set([
   "not-found.tsx",
   "route.ts",
   "globals.css",
+  "marketing.css",
   "favicon.ico",
 ]);
 const APP_DIR = join(SRC, "app");
