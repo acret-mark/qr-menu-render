@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+// specs/033-search-engine-indexing-control FR-009.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 // specs/028-error-500-state FR-007/research.md Decision 4. Dev-only
 // verification aid — throws for real, so visiting this route in

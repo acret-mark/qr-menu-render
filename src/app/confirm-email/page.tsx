@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ConfirmationPending } from "@/components/auth/confirmation-pending";
 import { ConfirmEmailStatus } from "@/components/auth/confirm-email-status";
+
+// specs/033-search-engine-indexing-control FR-009.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 // specs/011-email-confirmation. Single page, branching on searchParams —
 // matches /reset-password's own query-param convention (research.md

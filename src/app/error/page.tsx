@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ErrorState } from "@/components/system/error-state";
 
 // specs/028-error-500-state FR-010/research.md Decision 3. The redirect
@@ -8,10 +9,12 @@ import { ErrorState } from "@/components/system/error-state";
 // `onRetry` — outside a Next.js error boundary there is no `reset()` to
 // wire up, so "Try Again" falls back to a full page reload.
 //
-// Deliberately no `robots` metadata here (spec Clarifications/research.md
-// Decision 6) — that belongs to the not-yet-ported search-engine-
-// indexing-control feature, which will add it across every owner/admin/
-// error route at once.
+// specs/033-search-engine-indexing-control FR-009 (the feature specs/028's
+// own comment above deferred this to).
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
 export default function ErrorPage() {
   return <ErrorState />;
 }

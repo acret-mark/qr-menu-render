@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOwnBusiness, type Business } from "@/lib/data-access/businesses";
@@ -5,6 +6,13 @@ import { getSubscriptionAccess } from "@/lib/subscriptions/access-gate";
 import { OwnerHeader } from "@/components/dashboard/owner-header";
 import { OwnerTabBar } from "@/components/dashboard/owner-tab-bar";
 import { SubscriptionLockedBanner } from "@/components/dashboard/subscription-locked-banner";
+
+// specs/033-search-engine-indexing-control FR-007: covers
+// dashboard/categories/qr/business-profile/support in one place, inherited
+// by every page under this route group rather than repeated per page.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 // specs/028-error-500-state FR-010: the recognized business-lifecycle
 // statuses. Anything else in the column (a data-integrity anomaly, not a

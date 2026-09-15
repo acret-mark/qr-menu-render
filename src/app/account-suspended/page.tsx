@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOwnBusiness } from "@/lib/data-access/businesses";
 import { signOutAction } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
+
+// specs/033-search-engine-indexing-control FR-009.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 /**
  * specs/015-trial-expired-suspended. Standalone route, outside the

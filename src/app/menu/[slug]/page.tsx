@@ -19,6 +19,15 @@ import { TranslationUnavailableBanner } from "@/components/menu/translation-unav
 import { MenuNotAvailable } from "@/components/menu/menu-not-available";
 import { FooterRegistrationCta } from "@/components/menu/footer-registration-cta";
 import { OfflineIndicator } from "@/components/menu/offline-indicator";
+import type { Metadata } from "next";
+
+// specs/033-search-engine-indexing-control FR-006/research.md Decision 5: a
+// plain static export, not generateMetadata — this route has no existing
+// dynamic metadata to merge with, and a static export structurally
+// guarantees no per-business title/description is ever added here (FR-012).
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 // Public menu display (specs/007-public-menu-display) — the first
 // unauthenticated, customer-facing page in the project. getPublicBusinessBySlug

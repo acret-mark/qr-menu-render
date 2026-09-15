@@ -124,6 +124,10 @@ const ALLOWED_APP_FILES = new Set([
   "globals.css",
   "marketing.css",
   "favicon.ico",
+  // Next.js metadata-route convention files (specs/033-search-engine-
+  // indexing-control) — framework-recognized, not arbitrary shared logic.
+  "robots.ts",
+  "sitemap.ts",
 ]);
 const APP_DIR = join(SRC, "app");
 try {
