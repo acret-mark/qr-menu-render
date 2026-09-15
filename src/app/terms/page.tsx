@@ -1,20 +1,49 @@
+import { Fraunces, Bricolage_Grotesque } from "next/font/google";
+import { REGISTER_HREF } from "@/lib/marketing/content";
+import { TERMS_META, TERMS_SECTIONS } from "@/lib/marketing/terms-content";
+import "@/app/(marketing)/marketing.css";
+import { MarketingNav } from "@/components/marketing/marketing-nav";
+import { MarketingFooter } from "@/components/marketing/marketing-footer";
+import { TermsToc } from "@/components/marketing/terms-toc";
+import { TermsContent } from "@/components/marketing/terms-content";
+
 export const metadata = { title: "Terms & Conditions — Hapag" };
 
 /**
- * specs/030-marketing-homepage FR-021. Minimal, honest placeholder — no
- * legal Terms content exists anywhere in this project yet; real content is
- * specs/032-terms-conditions's own scope (Clarifications), not this
- * feature's. Exists only so the footer's "Terms & conditions" link
- * resolves to something real rather than a 404.
+ * Real Terms & Conditions page (specs/032-terms-conditions) — replaces the
+ * placeholder shipped by specs/030-marketing-homepage.
+ *
+ * Deliberately stays at this existing top-level route rather than moving
+ * under the `(marketing)` route group (no URL change, no unnecessary
+ * route-move churn — research.md Decision 3), mirroring
+ * src/app/privacy/page.tsx (specs/031) exactly; instead it imports the same
+ * marketing chrome and fonts that group's layout.tsx uses (FR-003, FR-004).
+ *
+ * Deliberately does NOT apply the homepage's `mkt-reveal` scroll animation
+ * (research.md Decision 4) — a visitor following a deep anchor link needs
+ * the target section immediately visible, not faded in.
  */
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  weight: ["700", "800", "900"],
+});
+
+const bricolageGrotesque = Bricolage_Grotesque({
+  variable: "--font-bricolage",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 export default function TermsPage() {
   return (
-    <main className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="text-2xl font-bold">Terms &amp; Conditions</h1>
-      <p className="mt-4 text-muted-foreground">
-        Hapag&apos;s full terms of service are being finalized. In the meantime, contact us
-        directly with any questions about using the platform.
-      </p>
-    </main>
+    <div className={`marketing-page ${fraunces.variable} ${bricolageGrotesque.variable}`}>
+      <MarketingNav registerHref={REGISTER_HREF} />
+      <main className="px-5 pt-16 min-[900px]:px-10">
+        <TermsToc sections={TERMS_SECTIONS} />
+        <TermsContent sections={TERMS_SECTIONS} meta={TERMS_META} />
+      </main>
+      <MarketingFooter />
+    </div>
   );
 }
