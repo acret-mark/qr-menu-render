@@ -35,7 +35,7 @@ export default async function PublicMenuPage({
   const business = await getPublicBusinessBySlug(slug);
 
   if (!business) {
-    return <MenuNotAvailable />;
+    return <MenuNotAvailable slug={slug} />;
   }
 
   const [categories, itemIngredientRows] = await Promise.all([
