@@ -45,6 +45,29 @@ export async function getOwnBusiness(ownerId: string): Promise<Business | null> 
 }
 
 /**
+ * Owner-scoped (specs/010-business-profile-editing): partial update to a
+ * business's own editable profile fields — never touches slug, ownerId,
+ * plan, or status. Resolves ownerId -> own business via getOwnBusiness
+ * first, same trust chain as updateOwnItem/updateOwnCategory; never trusts
+ * a businessId from client input. Returns null if the caller has no
+ * business.
+ */
+export async function updateOwnBusiness(
+  ownerId: string,
+  input: Partial<Pick<Business, "name" | "logoUrl" | "contactPhone" | "contactEmail" | "address">>
+): Promise<Business | null> {
+  const business = await getOwnBusiness(ownerId);
+  if (!business) return null;
+
+  const [updated] = await db
+    .update(businesses)
+    .set(input)
+    .where(eq(businesses.id, business.id))
+    .returning();
+  return updated ?? null;
+}
+
+/**
  * T034 security review note: this is the one function in this module that
  * doesn't fit the owner/admin/public naming convention — it takes no
  * identity because it isn't tenant data at all, just a boolean existence
