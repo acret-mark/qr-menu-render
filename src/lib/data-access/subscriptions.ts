@@ -1,6 +1,6 @@
-import { desc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { subscriptions, type planTypeEnum } from "@/lib/db/schema";
+import { businesses, subscriptions, type planTypeEnum } from "@/lib/db/schema";
 import { getOwnBusiness } from "./businesses";
 
 export type Subscription = typeof subscriptions.$inferSelect;
@@ -28,6 +28,41 @@ export async function getOwnLatestSubscription(ownerId: string): Promise<Subscri
 // Added here (T023/T026) rather than a separate file — subscriptions are a
 // single-table concern and splitting owner/admin functions across files
 // would separate closely related logic for no benefit.
+
+export type PendingSubscriptionRow = Subscription & { businessName: string };
+
+/**
+ * specs/012-payment-queue: intentionally cross-tenant, no identity
+ * parameter — trusted entirely by the caller having already verified
+ * isAdmin (the admin (protected) layout's gate), same shape as
+ * adminGetAllBusinesses. Ordered oldest-first (FR-006).
+ */
+export async function adminGetPendingSubscriptions(): Promise<PendingSubscriptionRow[]> {
+  const rows = await db
+    .select({
+      id: subscriptions.id,
+      businessId: subscriptions.businessId,
+      plan: subscriptions.plan,
+      amount: subscriptions.amount,
+      status: subscriptions.status,
+      paymentMethod: subscriptions.paymentMethod,
+      paymentProofUrl: subscriptions.paymentProofUrl,
+      activatedBy: subscriptions.activatedBy,
+      activatedAt: subscriptions.activatedAt,
+      startsAt: subscriptions.startsAt,
+      expiresAt: subscriptions.expiresAt,
+      reminderSentAt: subscriptions.reminderSentAt,
+      expiryReminderSentAt: subscriptions.expiryReminderSentAt,
+      createdAt: subscriptions.createdAt,
+      businessName: businesses.name,
+    })
+    .from(subscriptions)
+    .innerJoin(businesses, eq(businesses.id, subscriptions.businessId))
+    .where(eq(subscriptions.status, "pending"))
+    .orderBy(asc(subscriptions.createdAt));
+
+  return rows;
+}
 
 export async function adminGetAllSubscriptionsForBusiness(
   businessId: string

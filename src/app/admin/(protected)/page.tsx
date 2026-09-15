@@ -1,16 +1,17 @@
-import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { adminGetAllBusinesses } from "@/lib/data-access/businesses";
 
-// Minimal admin panel (spec 002 T025/T027) — proves adminGetAllBusinesses
-// reaches every business regardless of owner, and that a non-admin session
-// never reaches this page. The full admin panel (payment queue, ticket
-// management, etc.) is a later, separate feature spec.
+// Admin business list (spec 002 T025/T027). Session gate now lives in
+// admin/(protected)/layout.tsx (specs/012-payment-queue) — this page only
+// reads its own data.
 export default async function AdminPage() {
+  // admin/(protected)/layout.tsx redirects unauthenticated/non-admin
+  // visitors, but Next.js still evaluates this page concurrently with that
+  // redirect — bail out quietly rather than asserting non-null; the
+  // eventual response is the layout's redirect regardless (same pattern
+  // established in specs/009).
   const user = await getCurrentUser();
-  if (!user?.isAdmin) {
-    redirect("/admin/login");
-  }
+  if (!user?.isAdmin) return null;
 
   const allBusinesses = await adminGetAllBusinesses();
 

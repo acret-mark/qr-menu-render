@@ -157,3 +157,11 @@ export async function adminLoginAction(
 export async function signOutAction(): Promise<void> {
   await signOut({ redirectTo: "/login" });
 }
+
+/**
+ * Same as signOutAction, but for the admin shell (specs/012-payment-queue)
+ * — returns to /admin/login rather than the owner /login.
+ */
+export async function signOutAdminAction(): Promise<void> {
+  await signOut({ redirectTo: "/admin/login" });
+}
