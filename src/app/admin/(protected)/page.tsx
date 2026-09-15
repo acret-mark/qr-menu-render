@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { adminGetAllBusinesses } from "@/lib/data-access/businesses";
+import { adminGetExpiredBusinessCount } from "@/lib/data-access/subscriptions";
 import { BusinessStatusBadge } from "@/components/admin/business-status-badge";
 import { BusinessStatsSummary } from "@/components/admin/business-stats-summary";
 
@@ -21,7 +22,10 @@ export default async function AdminPage() {
   const user = await getCurrentUser();
   if (!user?.isAdmin) return null;
 
-  const businesses = await adminGetAllBusinesses();
+  const [businesses, expired] = await Promise.all([
+    adminGetAllBusinesses(),
+    adminGetExpiredBusinessCount(),
+  ]);
 
   const total = businesses.length;
   const active = businesses.filter((b) => b.status === "active").length;
@@ -37,7 +41,13 @@ export default async function AdminPage() {
         <p className="text-sm text-muted-foreground">All registered Hapag accounts.</p>
       </div>
 
-      <BusinessStatsSummary total={total} active={active} trial={trial} needsAttention={needsAttention} />
+      <BusinessStatsSummary
+        total={total}
+        active={active}
+        trial={trial}
+        needsAttention={needsAttention}
+        expired={expired}
+      />
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
         {businesses.length === 0 ? (

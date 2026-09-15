@@ -4,6 +4,7 @@ import { getOwnCategories } from "@/lib/data-access/categories";
 import { getOwnItems } from "@/lib/data-access/items";
 import { getOwnItemTranslations } from "@/lib/data-access/translations";
 import { hasStaleTranslation } from "@/lib/categories/translation-status";
+import { getSubscriptionAccess } from "@/lib/subscriptions/access-gate";
 import { MenuItemList, type MenuItemListCategory } from "@/components/items/menu-item-list";
 import { AddItemFab } from "@/components/items/add-item-fab";
 import Link from "next/link";
@@ -28,11 +29,13 @@ export default async function MenuPage() {
     );
   }
 
-  const [categories, items, translations] = await Promise.all([
+  const [categories, items, translations, access] = await Promise.all([
     getOwnCategories(user.id),
     getOwnItems(user.id),
     getOwnItemTranslations(user.id),
+    getSubscriptionAccess(business.id),
   ]);
+  const locked = !access.full;
 
   if (categories.length === 0) {
     return (
@@ -75,8 +78,8 @@ export default async function MenuPage() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
       <h1 className="text-2xl font-semibold">Menu</h1>
-      <MenuItemList categories={listCategories} />
-      <AddItemFab />
+      <MenuItemList categories={listCategories} locked={locked} />
+      {!locked && <AddItemFab />}
     </div>
   );
 }

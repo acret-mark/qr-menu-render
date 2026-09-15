@@ -19,7 +19,13 @@ function formatPrice(price: string): string {
   return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export function MenuItemRow({ item }: { item: MenuItemRowItem }) {
+export function MenuItemRow({
+  item,
+  locked = false,
+}: {
+  item: MenuItemRowItem;
+  locked?: boolean;
+}) {
   const [isSoldOut, setIsSoldOut] = useState(item.isSoldOut);
   const [saveFailed, setSaveFailed] = useState(false);
   // Guards against a stale, slower response clobbering a newer toggle if
@@ -71,24 +77,38 @@ export function MenuItemRow({ item }: { item: MenuItemRowItem }) {
         )}
       </div>
 
-      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        Available
-        <input
-          type="checkbox"
-          checked={!isSoldOut}
-          onChange={(e) => handleToggle(e.target.checked)}
-          className="size-4"
-          aria-label={`${item.name} available`}
-        />
-      </label>
+      {/* specs/020-unified-subscription-lifecycle FR-012: sold-out toggling
+          and editing are both menu-editing actions — the interactive
+          controls are hidden, not just disabled, when locked
+          (setItemSoldOut/the edit form's save already reject it
+          server-side either way). Existing menu *viewing* is unaffected —
+          the row and its availability status still render, read-only. */}
+      {locked ? (
+        <span className="text-xs text-muted-foreground">
+          {isSoldOut ? "Sold out" : "Available"}
+        </span>
+      ) : (
+        <>
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            Available
+            <input
+              type="checkbox"
+              checked={!isSoldOut}
+              onChange={(e) => handleToggle(e.target.checked)}
+              className="size-4"
+              aria-label={`${item.name} available`}
+            />
+          </label>
 
-      <Link
-        href={`/dashboard/menu/${item.id}/edit`}
-        aria-label={`Edit ${item.name}`}
-        className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-      >
-        <Pencil className="size-4" />
-      </Link>
+          <Link
+            href={`/dashboard/menu/${item.id}/edit`}
+            aria-label={`Edit ${item.name}`}
+            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <Pencil className="size-4" />
+          </Link>
+        </>
+      )}
     </li>
   );
 }

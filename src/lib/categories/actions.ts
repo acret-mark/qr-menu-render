@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
+import { requireEditAccess } from "@/lib/auth/edit-access";
 import {
   createOwnCategory,
   deleteOwnCategory,
@@ -19,7 +20,7 @@ import { getRequiredDisplayLanguages } from "@/lib/categories/translation-status
 
 export type SaveCategoryResult =
   | { ok: true; hasStaleTranslation: boolean }
-  | { ok: false; reason: "empty-name" | "not-authenticated" | "no-business" | "not-found" };
+  | { ok: false; reason: "empty-name" | "not-authenticated" | "no-business" | "not-found" | "locked" };
 
 /**
  * Create or update a category, then translate-on-save (spec FR-011–FR-013):
@@ -36,6 +37,11 @@ export async function saveCategory(input: {
 
   const name = input.name.trim();
   if (!name) return { ok: false, reason: "empty-name" };
+
+  // specs/020-unified-subscription-lifecycle FR-012: server-side half of
+  // the read-only lock — rejects even a direct call bypassing the UI.
+  const editAccess = await requireEditAccess(user.id);
+  if (!editAccess.ok) return { ok: false, reason: "locked" };
 
   const business = await getOwnBusiness(user.id);
   if (!business) return { ok: false, reason: "no-business" };
@@ -91,6 +97,10 @@ export type DeleteCategoryResult = { ok: boolean };
 
 export async function deleteCategory(input: { id: string }): Promise<DeleteCategoryResult> {
   const user = await requireUser();
+
+  const editAccess = await requireEditAccess(user.id);
+  if (!editAccess.ok) return { ok: false };
+
   const ok = await deleteOwnCategory(user.id, input.id);
   revalidatePath("/categories");
   return { ok };
@@ -98,13 +108,17 @@ export async function deleteCategory(input: { id: string }): Promise<DeleteCateg
 
 export type ReorderCategoryResult =
   | { ok: true }
-  | { ok: false; reason: "not-found" | "boundary" };
+  | { ok: false; reason: "not-found" | "boundary" | "locked" };
 
 export async function reorderCategory(input: {
   id: string;
   direction: "up" | "down";
 }): Promise<ReorderCategoryResult> {
   const user = await requireUser();
+
+  const editAccess = await requireEditAccess(user.id);
+  if (!editAccess.ok) return { ok: false, reason: "locked" };
+
   const result = await reorderOwnCategory(user.id, input.id, input.direction);
   if (result.ok) revalidatePath("/categories");
   return result;

@@ -4,6 +4,7 @@ import { getOwnCategories } from "@/lib/data-access/categories";
 import { getOwnItems } from "@/lib/data-access/items";
 import { getOwnCategoryTranslations } from "@/lib/data-access/translations";
 import { hasStaleTranslation } from "@/lib/categories/translation-status";
+import { getSubscriptionAccess } from "@/lib/subscriptions/access-gate";
 import { CategoryList, type CategoryListItem } from "@/components/categories/category-list";
 import { AddCategoryFab } from "@/components/categories/add-category-fab";
 
@@ -28,11 +29,13 @@ export default async function CategoriesPage() {
     );
   }
 
-  const [categories, items, translations] = await Promise.all([
+  const [categories, items, translations, access] = await Promise.all([
     getOwnCategories(user.id),
     getOwnItems(user.id),
     getOwnCategoryTranslations(user.id),
+    getSubscriptionAccess(business.id),
   ]);
+  const locked = !access.full;
 
   const sorted = [...categories].sort((a, b) => a.sortOrder - b.sortOrder);
 
@@ -56,8 +59,8 @@ export default async function CategoriesPage() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
       <h1 className="text-2xl font-semibold">Categories</h1>
-      <CategoryList categories={listItems} />
-      <AddCategoryFab />
+      <CategoryList categories={listItems} locked={locked} />
+      {!locked && <AddCategoryFab />}
     </div>
   );
 }

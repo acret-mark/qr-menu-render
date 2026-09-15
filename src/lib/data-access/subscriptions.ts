@@ -3,6 +3,7 @@ import { db } from "@/lib/db/client";
 import { businesses, subscriptions, type planTypeEnum } from "@/lib/db/schema";
 import { getOwnBusiness } from "./businesses";
 import { PLAN_PRICING } from "@/lib/subscriptions/pricing";
+import { isWithinGrace } from "@/lib/subscriptions/expiry";
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type PlanType = (typeof planTypeEnum.enumValues)[number];
@@ -246,4 +247,41 @@ export async function adminGrantTrialSubscription(
     })
     .returning();
   return subscription;
+}
+
+/**
+ * specs/020-unified-subscription-lifecycle, research.md Decision 4. A live
+ * computation, never a stored count — a business is "locked" (for this
+ * count's purposes) using the exact same rule as
+ * src/lib/subscriptions/access-gate.ts's getSubscriptionAccess: its most
+ * recent ever-activated subscription (expiresAt set) is not
+ * status === "active" within grace. Groups all subscriptions by business in
+ * one query (ordered so the first row seen per business is its most recent
+ * activated one) rather than N+1 per-business reads.
+ */
+export async function adminGetExpiredBusinessCount(): Promise<number> {
+  const rows = await db
+    .select({
+      businessId: subscriptions.businessId,
+      status: subscriptions.status,
+      expiresAt: subscriptions.expiresAt,
+    })
+    .from(subscriptions)
+    .orderBy(desc(subscriptions.createdAt));
+
+  const mostRecentActivatedByBusiness = new Map<string, { status: string; expiresAt: Date }>();
+  for (const row of rows) {
+    if (row.expiresAt === null) continue;
+    if (!mostRecentActivatedByBusiness.has(row.businessId)) {
+      mostRecentActivatedByBusiness.set(row.businessId, { status: row.status, expiresAt: row.expiresAt });
+    }
+  }
+
+  let count = 0;
+  for (const { status, expiresAt } of mostRecentActivatedByBusiness.values()) {
+    if (!(status === "active" && isWithinGrace(expiresAt))) {
+      count++;
+    }
+  }
+  return count;
 }

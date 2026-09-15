@@ -78,6 +78,12 @@ const ALLOWED_SECRET_FILES = new Set([
   join(SRC, "lib", "db", "client.ts"),
   join(SRC, "lib", "email", "google-smtp-client.ts"),
   join(SRC, "lib", "cloudinary", "client.ts"),
+  // Each CRON_SECRET-gated route checks its own bearer token directly
+  // (matching render.yaml's per-route curl invocation) — unlike
+  // DATABASE_URL/GMAIL_SMTP_APP_PASSWORD/CLOUDINARY_API_SECRET, which
+  // centralize behind one client file, there's no single shared client to
+  // centralize a per-request header check behind.
+  join(SRC, "app", "api", "cron", "subscription-expiry", "route.ts"),
 ]);
 for (const file of codeFiles) {
   if (ALLOWED_SECRET_FILES.has(file)) continue;

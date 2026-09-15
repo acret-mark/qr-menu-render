@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
+import { requireEditAccess } from "@/lib/auth/edit-access";
 import {
   createOwnItem,
   deleteOwnItem,
@@ -32,7 +33,8 @@ export type SaveItemResult =
         | "invalid-category"
         | "not-authenticated"
         | "no-business"
-        | "not-found";
+        | "not-found"
+        | "locked";
     };
 
 /**
@@ -58,6 +60,11 @@ export async function saveItem(input: {
   if (!name) return { ok: false, reason: "empty-name" };
   if (!input.categoryId) return { ok: false, reason: "missing-category" };
   if (!isValidPrice(input.price)) return { ok: false, reason: "invalid-price" };
+
+  // specs/020-unified-subscription-lifecycle FR-012: server-side half of
+  // the read-only lock — rejects even a direct call bypassing the UI.
+  const editAccess = await requireEditAccess(user.id);
+  if (!editAccess.ok) return { ok: false, reason: "locked" };
 
   const business = await getOwnBusiness(user.id);
   if (!business) return { ok: false, reason: "no-business" };
@@ -124,6 +131,10 @@ export type DeleteItemResult = { ok: boolean };
 
 export async function deleteItem(input: { id: string }): Promise<DeleteItemResult> {
   const user = await requireUser();
+
+  const editAccess = await requireEditAccess(user.id);
+  if (!editAccess.ok) return { ok: false };
+
   const ok = await deleteOwnItem(user.id, input.id);
   revalidatePath("/dashboard/menu");
   return { ok };
@@ -136,6 +147,10 @@ export async function setItemSoldOut(input: {
   isSoldOut: boolean;
 }): Promise<SetItemSoldOutResult> {
   const user = await requireUser();
+
+  const editAccess = await requireEditAccess(user.id);
+  if (!editAccess.ok) return { ok: false };
+
   const item = await setOwnItemSoldOut(user.id, input.id, input.isSoldOut);
   if (item) revalidatePath("/dashboard/menu");
   return { ok: !!item };
