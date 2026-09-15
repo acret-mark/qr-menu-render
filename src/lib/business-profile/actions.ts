@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { updateOwnBusiness } from "@/lib/data-access/businesses";
+import { createOwnSubscription, type PlanType } from "@/lib/data-access/subscriptions";
 import { validateImageFile } from "@/lib/uploads/image-validation";
 import { uploadImage } from "@/lib/cloudinary/client";
 import { isValidEmail } from "@/lib/validation/email";
@@ -82,4 +83,76 @@ export async function uploadBusinessLogo(formData: FormData): Promise<UploadBusi
 
   revalidatePath("/business-profile");
   return { ok: true, logoUrl };
+}
+
+export type UploadPaymentProofResult =
+  | { ok: true; proofUrl: string }
+  | { ok: false; message: string };
+
+/**
+ * specs/014-owner-subscription-tab (research.md Decision 3) — mirrors
+ * uploadBusinessLogo exactly: same validation, same uploadImage helper,
+ * folder: "payment-proofs" instead of "businesses". Does NOT persist
+ * anything on the business/subscription — the URL is only attached to a
+ * subscription row by submitPayment below, once the owner actually submits.
+ */
+export async function uploadPaymentProof(formData: FormData): Promise<UploadPaymentProofResult> {
+  await requireUser();
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) {
+    return { ok: false, message: "No file provided." };
+  }
+
+  const validationError = validateImageFile(file);
+  if (validationError) {
+    return { ok: false, message: validationError };
+  }
+
+  try {
+    const proofUrl = await uploadImage(file, { folder: "payment-proofs" });
+    return { ok: true, proofUrl };
+  } catch (error) {
+    console.error("uploadPaymentProof: upload failed", error);
+    return { ok: false, message: "The upload failed. Please try again." };
+  }
+}
+
+export type SubmitPaymentResult = { ok: true } | { ok: false; message: string };
+
+/**
+ * specs/014-owner-subscription-tab FR-005–FR-007. Blocks submission until
+ * proof has been uploaded (FR-006); always creates a new subscription row,
+ * never updates an existing one (createOwnSubscription's own insert-only
+ * shape, FR-007/SC-003).
+ */
+export async function submitPayment(formData: FormData): Promise<SubmitPaymentResult> {
+  const user = await requireUser();
+
+  const plan = formData.get("plan") as string | null;
+  if (plan !== "standard" && plan !== "pro") {
+    return { ok: false, message: "Choose a plan before submitting." };
+  }
+
+  const paymentMethod = (formData.get("paymentMethod") as string | null)?.trim() ?? "";
+  if (!paymentMethod) {
+    return { ok: false, message: "Choose a payment method before submitting." };
+  }
+
+  const paymentProofUrl = (formData.get("paymentProofUrl") as string | null)?.trim() ?? "";
+  if (!paymentProofUrl) {
+    return { ok: false, message: "Please attach proof of payment before submitting." };
+  }
+
+  const subscription = await createOwnSubscription(user.id, {
+    plan: plan as Exclude<PlanType, "trial">,
+    paymentMethod,
+    paymentProofUrl,
+  });
+  if (!subscription) {
+    return { ok: false, message: "No business found for this account." };
+  }
+
+  revalidatePath("/business-profile");
+  return { ok: true };
 }

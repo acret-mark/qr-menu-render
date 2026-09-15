@@ -2,6 +2,7 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { businesses, subscriptions, type planTypeEnum } from "@/lib/db/schema";
 import { getOwnBusiness } from "./businesses";
+import { PLAN_PRICING } from "@/lib/subscriptions/pricing";
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type PlanType = (typeof planTypeEnum.enumValues)[number];
@@ -22,6 +23,36 @@ export async function getOwnSubscriptions(ownerId: string): Promise<Subscription
 export async function getOwnLatestSubscription(ownerId: string): Promise<Subscription | null> {
   const [latest] = await getOwnSubscriptions(ownerId);
   return latest ?? null;
+}
+
+/**
+ * specs/014-owner-subscription-tab: always INSERTs a new row — never
+ * updates an existing one (FR-007/SC-003, research.md Decision 2).
+ * Subscription history is multiple rows, one per payment attempt, by
+ * design. `amount` is derived from PLAN_PRICING, never accepted as input
+ * (FR-011) — mirrors adminGrantActiveSubscription/
+ * adminGrantTrialSubscription's existing insert-only shape, from the
+ * owner side instead of admin.
+ */
+export async function createOwnSubscription(
+  ownerId: string,
+  input: { plan: Exclude<PlanType, "trial">; paymentMethod: string; paymentProofUrl: string }
+): Promise<Subscription | null> {
+  const business = await getOwnBusiness(ownerId);
+  if (!business) return null;
+
+  const [subscription] = await db
+    .insert(subscriptions)
+    .values({
+      businessId: business.id,
+      plan: input.plan,
+      amount: PLAN_PRICING[input.plan],
+      status: "pending",
+      paymentMethod: input.paymentMethod,
+      paymentProofUrl: input.paymentProofUrl,
+    })
+    .returning();
+  return subscription;
 }
 
 // ---- Admin-scoped (contracts/data-access-layer.md category 2) ----
