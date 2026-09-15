@@ -42,9 +42,12 @@ async function generateUniqueSlug(businessName: string): Promise<string> {
 
 /**
  * Replaces qr-menu-dev's Supabase `signUp` + RLS-gated business insert
- * (specs/002-authjs-authorization FR-001/FR-002). No email confirmation
- * step here — deferred pre-launch per spec.md Assumptions — so a session
- * is always creatable immediately after this returns ok.
+ * (specs/002-authjs-authorization FR-001/FR-002). This function itself
+ * still only creates the user/business rows and sends the welcome email —
+ * it does not sign the owner in. Its caller (registerAction,
+ * src/lib/auth/actions.ts) requires the owner to confirm their email
+ * before establishing a session (specs/011-email-confirmation), reversing
+ * this project's original "not required for v1" decision.
  */
 export async function registerOwner({
   businessName,

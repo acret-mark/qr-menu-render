@@ -29,7 +29,9 @@ export type RateLimitResult = { allowed: true } | { allowed: false; retryAfterSe
  * (stops both a wrong-password-guessing loop and a registration-spam loop
  * equally, without needing to distinguish them).
  */
-export async function checkRateLimit(action: "login" | "register"): Promise<RateLimitResult> {
+export async function checkRateLimit(
+  action: "login" | "register" | "resend-confirmation"
+): Promise<RateLimitResult> {
   const key = await getClientKey(action);
   const now = Date.now();
   const entry = attempts.get(key);

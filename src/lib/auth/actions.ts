@@ -2,15 +2,17 @@
 
 import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
-import { signIn, signOut } from "./auth.config";
+import { signIn, signOut, UnconfirmedEmailError } from "./auth.config";
 import { registerOwner, type RegisterOwnerInput } from "./register";
 import { getCurrentUser } from "./session";
 import { checkRateLimit } from "./rate-limit";
+import { requestEmailConfirmation } from "./email-confirmation";
 
 export type LoginActionResult = { ok: true } | { ok: false; message: string };
 
 const INVALID_CREDENTIALS_MESSAGE = "Invalid email or password.";
 const RATE_LIMITED_MESSAGE = "Too many attempts — please wait a bit before trying again.";
+const UNCONFIRMED_EMAIL_MESSAGE = "Please confirm your email before signing in.";
 
 /**
  * Server Action wrapping Auth.js v5's server-side `signIn` (auth.config.ts),
@@ -29,6 +31,15 @@ export async function loginAction(email: string, password: string): Promise<Logi
     await signIn("credentials", { email, password, redirectTo: "/dashboard" });
     return { ok: true };
   } catch (err) {
+    if (err instanceof UnconfirmedEmailError) {
+      // Deliberately NOT collapsed into the generic message below — this
+      // only fires when the password was actually correct, so telling the
+      // owner why login didn't proceed is not an enumeration risk the way
+      // distinguishing "no such account" from "wrong password" would be
+      // (specs/011-email-confirmation, matching qr-menu-dev's own
+      // email_not_confirmed distinction).
+      return { ok: false, message: UNCONFIRMED_EMAIL_MESSAGE };
+    }
     if (err instanceof AuthError) {
       // Same message whether the account doesn't exist or the password is
       // wrong (SC-005 anti-enumeration) — auth.config.ts's authorize()
@@ -43,6 +54,14 @@ export type RegisterActionResult =
   | { ok: true }
   | { ok: false; stage: "duplicate-email" | "business" | "auth"; message: string };
 
+/**
+ * Registration now requires email confirmation before reaching the
+ * dashboard (specs/011-email-confirmation), reversing specs/002's original
+ * "not required for v1" decision — see specs/002/spec.md's Assumptions and
+ * specs/011/spec.md's Clarifications for the recorded reversal. Sends a
+ * confirmation email (requestEmailConfirmation) instead of signing the
+ * owner in directly, then redirects to the confirmation-pending screen.
+ */
 export async function registerAction(input: RegisterOwnerInput): Promise<RegisterActionResult> {
   const rateLimit = await checkRateLimit("register");
   if (!rateLimit.allowed) {
@@ -54,26 +73,42 @@ export async function registerAction(input: RegisterOwnerInput): Promise<Registe
     return result;
   }
 
+  await requestEmailConfirmation(input.email);
+  redirect(`/confirm-email?email=${encodeURIComponent(input.email.trim().toLowerCase())}`);
+}
+
+export type CompleteEmailConfirmationResult = { ok: false; message: string };
+
+const INVALID_CONFIRMATION_MESSAGE =
+  "This confirmation link is invalid or has expired. Please request a new one.";
+
+/**
+ * Attempts to sign in using a confirmation token (specs/011 FR-004,
+ * research.md Decision 3/6) — auth.config.ts's authorize() does the actual
+ * validation/consumption; this wrapper only translates its outcome for the
+ * /confirm-email page. Only ever returns on failure — success throws
+ * NEXT_REDIRECT via `redirectTo`, exactly like registerAction/loginAction.
+ */
+export async function completeEmailConfirmation(
+  token: string,
+  email: string
+): Promise<CompleteEmailConfirmationResult> {
   try {
     await signIn("credentials", {
-      email: input.email,
-      password: input.password,
-      redirectTo: "/dashboard",
+      email,
+      confirmationToken: token,
+      redirectTo: "/business-profile",
     });
   } catch (err) {
     if (err instanceof AuthError) {
-      // Account exists but the immediate sign-in failed for some reason —
-      // fail safe rather than leaving the owner stranded on a blank error.
-      return {
-        ok: false,
-        stage: "auth",
-        message: "Your account was created. Please log in.",
-      };
+      return { ok: false, message: INVALID_CONFIRMATION_MESSAGE };
     }
     throw err;
   }
 
-  return { ok: true };
+  // Unreachable — signIn always either redirects (throws) or throws
+  // AuthError above — but satisfies the function's return type.
+  return { ok: false, message: INVALID_CONFIRMATION_MESSAGE };
 }
 
 const INVALID_ADMIN_CREDENTIALS_MESSAGE = "Invalid email or password.";
