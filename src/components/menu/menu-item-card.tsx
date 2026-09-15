@@ -9,6 +9,9 @@ export type MenuDisplayItem = {
   photoUrl: string | null;
   isSoldOut: boolean;
   isBestSeller: boolean;
+  // Translated ?? source per name (spec 008 FR-017); absent/[] when the
+  // item has none — never an empty-placeholder line (spec 008 FR-014).
+  ingredients?: { id: string; name: string }[];
 };
 
 function formatPrice(price: string): string {
@@ -16,46 +19,62 @@ function formatPrice(price: string): string {
   return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export function MenuItemCard({ item }: { item: MenuDisplayItem }) {
+export function MenuItemCard({
+  item,
+  onOpen,
+}: {
+  item: MenuDisplayItem;
+  onOpen?: () => void;
+}) {
   return (
-    <li className="flex gap-3 py-3">
-      <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-        {item.photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- Cloudinary already optimizes/transforms this URL
-          <img
-            src={item.photoUrl}
-            alt=""
-            className={cn("size-full object-cover", item.isSoldOut && "grayscale-[70%]")}
-          />
-        ) : (
-          <div
-            className={cn(
-              "flex size-full items-center justify-center",
-              item.isSoldOut && "grayscale-[70%]"
-            )}
-          >
-            <ImageOff className="size-5 text-muted-foreground" />
-          </div>
-        )}
-        {item.isSoldOut && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <span className="text-xs font-bold text-white">Sold Out</span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="flex items-center gap-1.5 font-medium">
-          {item.isBestSeller && (
-            <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" aria-label="Best seller" />
+    <li>
+      <button
+        type="button"
+        onClick={onOpen}
+        disabled={!onOpen}
+        className="flex w-full gap-3 py-3 text-left disabled:cursor-default"
+      >
+        <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+          {item.photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- Cloudinary already optimizes/transforms this URL
+            <img
+              src={item.photoUrl}
+              alt=""
+              className={cn("size-full object-cover", item.isSoldOut && "grayscale-[70%]")}
+            />
+          ) : (
+            <div
+              className={cn(
+                "flex size-full items-center justify-center",
+                item.isSoldOut && "grayscale-[70%]"
+              )}
+            >
+              <ImageOff className="size-5 text-muted-foreground" />
+            </div>
           )}
-          <span className="truncate">{item.name}</span>
-        </span>
-        {item.description && (
-          <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
-        )}
-        <span className="text-sm font-medium">{formatPrice(item.price)}</span>
-      </div>
+          {item.isSoldOut && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+              <span className="text-xs font-bold text-white">Sold Out</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="flex items-center gap-1.5 font-medium">
+            {item.isBestSeller && (
+              <Star
+                className="size-3.5 shrink-0 fill-amber-400 text-amber-400"
+                aria-label="Best seller"
+              />
+            )}
+            <span className="truncate">{item.name}</span>
+          </span>
+          {item.description && (
+            <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
+          )}
+          <span className="text-sm font-medium">{formatPrice(item.price)}</span>
+        </div>
+      </button>
     </li>
   );
 }
