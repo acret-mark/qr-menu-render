@@ -57,13 +57,51 @@ export async function adminGetSupportTicketsForBusiness(
   return db.select().from(supportTickets).where(eq(supportTickets.businessId, businessId));
 }
 
+/**
+ * specs/021-support-ticket-management FR-009 (research.md Decision 1):
+ * replying always auto-resolves — fixed from a pre-existing, uncalled
+ * "in_progress" default that contradicted this spec's own requirement.
+ */
 export async function adminReplyToSupportTicket(
   ticketId: string,
   reply: string
 ): Promise<SupportTicket | null> {
   const [ticket] = await db
     .update(supportTickets)
-    .set({ adminReply: reply, repliedAt: new Date(), status: "in_progress" })
+    .set({ adminReply: reply, repliedAt: new Date(), status: "resolved" })
+    .where(eq(supportTickets.id, ticketId))
+    .returning();
+  return ticket ?? null;
+}
+
+/**
+ * specs/021-support-ticket-management, added beyond the original plan
+ * (research.md) — the detail view (`/admin/support/[id]`) needs a
+ * single-ticket-by-id read; only an all-tickets and a per-business read
+ * existed before this feature.
+ */
+export async function adminGetSupportTicketById(ticketId: string): Promise<SupportTicket | null> {
+  const [ticket] = await db
+    .select()
+    .from(supportTickets)
+    .where(eq(supportTickets.id, ticketId))
+    .limit(1);
+  return ticket ?? null;
+}
+
+/**
+ * specs/021-support-ticket-management FR-010/FR-011, research.md Decision
+ * 2. Status-only write — the `SET` clause structurally can never touch
+ * `adminReply`/`repliedAt`, guaranteeing FR-011 by construction rather than
+ * by care at each call site.
+ */
+export async function adminSetTicketStatus(
+  ticketId: string,
+  status: SupportTicket["status"]
+): Promise<SupportTicket | null> {
+  const [ticket] = await db
+    .update(supportTickets)
+    .set({ status })
     .where(eq(supportTickets.id, ticketId))
     .returning();
   return ticket ?? null;

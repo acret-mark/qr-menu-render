@@ -25,9 +25,15 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/payments",
     section: "/admin/payments",
   },
-  // Disabled until specs' future support-ticket-management admin spec
-  // builds the destination (research.md Decision 2).
-  { label: "Support", icon: LifeBuoy, enabled: false },
+  // Enabled by specs/021-support-ticket-management, which builds the
+  // destination this entry previously had no route for.
+  {
+    label: "Support",
+    icon: LifeBuoy,
+    enabled: true,
+    href: "/admin/support",
+    section: "/admin/support",
+  },
 ];
 
 function isActive(pathname: string, item: Extract<NavItem, { enabled: true }>): boolean {

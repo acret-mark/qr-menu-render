@@ -64,17 +64,18 @@ export default async function BusinessDetailPage({
             </Link>
           )}
           {hasOpenTicket && (
-            // Support tickets have no built destination yet (specs/021 not
-            // implemented) — a non-interactive affordance, matching this
-            // project's established "disabled until built" convention
-            // (AdminShell's own Support nav item), rather than a link to a
-            // route that would 404.
-            <span
-              aria-disabled="true"
-              className="cursor-not-allowed rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground/50"
+            // specs/021-support-ticket-management built the destination —
+            // a real link now (was a disabled affordance before that
+            // feature existed). Links to the general inbox, not a
+            // business-scoped filter — the inbox's own filter/sort is
+            // client-side state, not a URL param (specs/021 research.md
+            // Decision 3).
+            <Link
+              href="/admin/support"
+              className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted"
             >
               Support Tickets
-            </span>
+            </Link>
           )}
         </div>
       </div>
