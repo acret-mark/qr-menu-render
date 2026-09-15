@@ -16,6 +16,7 @@ import { MenuSearch } from "@/components/menu/menu-search";
 import { LanguageSelector } from "@/components/menu/language-selector";
 import { TranslationUnavailableBanner } from "@/components/menu/translation-unavailable-banner";
 import { MenuNotAvailable } from "@/components/menu/menu-not-available";
+import { FooterRegistrationCta } from "@/components/menu/footer-registration-cta";
 
 // Public menu display (specs/007-public-menu-display) — the first
 // unauthenticated, customer-facing page in the project. getPublicBusinessBySlug
@@ -114,6 +115,7 @@ export default async function PublicMenuPage({
         initialQuery={initialQuery}
         initialItemIndex={initialItemIndex}
       />
+      {business.plan === "standard" && <FooterRegistrationCta />}
     </div>
   );
 }
