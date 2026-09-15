@@ -46,6 +46,17 @@ export async function adminGetAllSupportTickets(): Promise<SupportTicket[]> {
   return db.select().from(supportTickets);
 }
 
+/**
+ * specs/018-business-detail: mirrors adminGetAllSubscriptionsForBusiness's
+ * exact per-business shape — avoids fetching every business's tickets just
+ * to check one business's existence signal (FR-008).
+ */
+export async function adminGetSupportTicketsForBusiness(
+  businessId: string
+): Promise<SupportTicket[]> {
+  return db.select().from(supportTickets).where(eq(supportTickets.businessId, businessId));
+}
+
 export async function adminReplyToSupportTicket(
   ticketId: string,
   reply: string
