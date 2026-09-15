@@ -18,6 +18,7 @@ import { LanguageSelector } from "@/components/menu/language-selector";
 import { TranslationUnavailableBanner } from "@/components/menu/translation-unavailable-banner";
 import { MenuNotAvailable } from "@/components/menu/menu-not-available";
 import { FooterRegistrationCta } from "@/components/menu/footer-registration-cta";
+import { OfflineIndicator } from "@/components/menu/offline-indicator";
 
 // Public menu display (specs/007-public-menu-display) — the first
 // unauthenticated, customer-facing page in the project. getPublicBusinessBySlug
@@ -106,6 +107,7 @@ export default async function PublicMenuPage({
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col">
+      <OfflineIndicator />
       <MenuHeader
         name={business.name}
         logoUrl={business.logoUrl}
