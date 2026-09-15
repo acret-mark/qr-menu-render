@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, lt } from "drizzle-orm";
 import { updateTag } from "next/cache";
 import { db } from "@/lib/db/client";
 import { businesses, subscriptions, type planTypeEnum } from "@/lib/db/schema";
@@ -294,4 +294,36 @@ export async function adminGetExpiredBusinessCount(): Promise<number> {
     }
   }
   return count;
+}
+
+export type DuePaymentReminderCandidate = { subscriptionId: string; businessId: string };
+
+/**
+ * specs/029-email-notifications FR-004/FR-005, research.md Decision 4. A
+ * single atomic UPDATE...RETURNING — the WHERE clause is both the
+ * eligibility filter and the claim in one step, so two overlapping cron
+ * runs can never both claim (and thus both email) the same subscription:
+ * only one UPDATE's WHERE can still match a row with `reminderSentAt IS
+ * NULL` at the moment it runs. Mirrors specs/020's own
+ * `expiryReminderSentAt` claim pattern exactly, for the unrelated
+ * `reminderSentAt` column.
+ */
+export async function claimDuePaymentReminders(
+  thresholdDays: number
+): Promise<DuePaymentReminderCandidate[]> {
+  const cutoff = new Date(Date.now() - thresholdDays * 24 * 60 * 60 * 1000);
+
+  const rows = await db
+    .update(subscriptions)
+    .set({ reminderSentAt: new Date() })
+    .where(
+      and(
+        eq(subscriptions.status, "pending"),
+        isNull(subscriptions.reminderSentAt),
+        lt(subscriptions.createdAt, cutoff)
+      )
+    )
+    .returning({ subscriptionId: subscriptions.id, businessId: subscriptions.businessId });
+
+  return rows;
 }

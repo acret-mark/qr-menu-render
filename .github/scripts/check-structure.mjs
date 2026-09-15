@@ -84,6 +84,7 @@ const ALLOWED_SECRET_FILES = new Set([
   // centralize behind one client file, there's no single shared client to
   // centralize a per-request header check behind.
   join(SRC, "app", "api", "cron", "subscription-expiry", "route.ts"),
+  join(SRC, "app", "api", "cron", "payment-reminders", "route.ts"),
 ]);
 for (const file of codeFiles) {
   if (ALLOWED_SECRET_FILES.has(file)) continue;
