@@ -1,16 +1,17 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOwnCategories } from "@/lib/data-access/categories";
 import { ItemForm } from "@/components/items/item-form";
 
-// Add item (specs/005-menu-items FR-001, FR-007). No shared (owner) layout
-// exists yet (research.md Decision 4) — this page checks its own session.
+// Add item (specs/005-menu-items FR-001, FR-007). Session gate now lives in
+// (owner)/layout.tsx (specs/009 FR-012).
 export default async function NewItemPage() {
+  // (owner)/layout.tsx redirects unauthenticated visitors, but Next.js still
+  // evaluates this page concurrently with that redirect — bail out quietly
+  // rather than asserting non-null; the eventual response is the layout's
+  // redirect regardless.
   const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) return null;
 
   const categories = await getOwnCategories(user.id);
 

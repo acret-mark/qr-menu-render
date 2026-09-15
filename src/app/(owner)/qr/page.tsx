@@ -1,18 +1,17 @@
-import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOwnBusiness } from "@/lib/data-access/businesses";
 import { QrCodeView } from "@/components/qr/qr-code-view";
 
-// QR Code screen (specs/006-qr-code-generation). No shared (owner) layout
-// exists yet (research.md Decision 4, same as /categories, /menu) — this
-// page checks its own session directly. getOwnBusiness is already
-// owner-scoped (specs/002) — no new data-access function needed
-// (research.md Decision 2).
+// QR Code screen (specs/006-qr-code-generation). Session gate now lives in
+// (owner)/layout.tsx (specs/009 FR-012). getOwnBusiness is already
+// owner-scoped (specs/002).
 export default async function QrPage() {
+  // (owner)/layout.tsx redirects unauthenticated visitors, but Next.js still
+  // evaluates this page concurrently with that redirect — bail out quietly
+  // rather than asserting non-null; the eventual response is the layout's
+  // redirect regardless.
   const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) return null;
 
   const business = await getOwnBusiness(user.id);
   if (!business) {

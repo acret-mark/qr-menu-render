@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOwnBusiness } from "@/lib/data-access/businesses";
 import { getOwnCategories } from "@/lib/data-access/categories";
@@ -8,14 +7,16 @@ import { hasStaleTranslation } from "@/lib/categories/translation-status";
 import { CategoryList, type CategoryListItem } from "@/components/categories/category-list";
 import { AddCategoryFab } from "@/components/categories/add-category-fab";
 
-// Owner category manager (specs/004-category-manager). No shared (owner)
-// layout exists yet (research.md Decision 4) — this page checks its own
-// session, same as /dashboard and /admin already do.
+// Owner category manager (specs/004-category-manager). Session gate now
+// lives in (owner)/layout.tsx (specs/009 FR-012) — this page's own
+// business-existence handling below is unchanged (research.md Decision 3).
 export default async function CategoriesPage() {
+  // (owner)/layout.tsx redirects unauthenticated visitors, but Next.js still
+  // evaluates this page concurrently with that redirect — bail out quietly
+  // rather than asserting non-null; the eventual response is the layout's
+  // redirect regardless.
   const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) return null;
 
   const business = await getOwnBusiness(user.id);
   if (!business) {

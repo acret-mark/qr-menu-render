@@ -112,3 +112,13 @@ export async function adminLoginAction(
 
   redirect("/admin");
 }
+
+/**
+ * Signs the current owner out and returns them to /login (specs/009 FR-011)
+ * — the first UI-reachable use of Auth.js's signOut in this codebase;
+ * adminLoginAction's own call above is an internal correction, not a
+ * user-facing control.
+ */
+export async function signOutAction(): Promise<void> {
+  await signOut({ redirectTo: "/login" });
+}
