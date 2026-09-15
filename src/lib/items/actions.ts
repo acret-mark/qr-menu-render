@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { requireEditAccess } from "@/lib/auth/edit-access";
 import {
@@ -124,6 +124,10 @@ export async function saveItem(input: {
   }
 
   revalidatePath("/dashboard/menu");
+  // specs/026-menu-data-caching FR-003/FR-004: an item create/update
+  // (including price/description/photo/sold-out/display toggles) affects
+  // the public menu's content.
+  updateTag(`menu:${business.slug}`);
   return { ok: true, id: item.id };
 }
 
@@ -135,8 +139,11 @@ export async function deleteItem(input: { id: string }): Promise<DeleteItemResul
   const editAccess = await requireEditAccess(user.id);
   if (!editAccess.ok) return { ok: false };
 
+  const business = await getOwnBusiness(user.id);
+
   const ok = await deleteOwnItem(user.id, input.id);
   revalidatePath("/dashboard/menu");
+  if (ok && business) updateTag(`menu:${business.slug}`);
   return { ok };
 }
 
@@ -151,8 +158,13 @@ export async function setItemSoldOut(input: {
   const editAccess = await requireEditAccess(user.id);
   if (!editAccess.ok) return { ok: false };
 
+  const business = await getOwnBusiness(user.id);
+
   const item = await setOwnItemSoldOut(user.id, input.id, input.isSoldOut);
-  if (item) revalidatePath("/dashboard/menu");
+  if (item) {
+    revalidatePath("/dashboard/menu");
+    if (business) updateTag(`menu:${business.slug}`);
+  }
   return { ok: !!item };
 }
 

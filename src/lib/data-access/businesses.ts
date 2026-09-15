@@ -1,4 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
+import { updateTag } from "next/cache";
 import { db } from "@/lib/db/client";
 import { businesses } from "@/lib/db/schema";
 import type { businesses as BusinessesTable } from "@/lib/db/schema";
@@ -128,5 +129,8 @@ export async function adminSetStatusAndPlan(
     .set({ status, plan })
     .where(eq(businesses.id, businessId))
     .returning();
+  // specs/026-menu-data-caching FR-003/FR-004/FR-009: a manual status/plan
+  // override affects the public menu's availability and Pro-tier features.
+  if (business) updateTag(`menu:${business.slug}`);
   return business ?? null;
 }

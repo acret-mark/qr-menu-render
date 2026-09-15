@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { updateOwnBusiness } from "@/lib/data-access/businesses";
 import { createOwnSubscription, type PlanType } from "@/lib/data-access/subscriptions";
@@ -35,7 +35,7 @@ export async function updateBusinessProfile(
   const contactPhone = (formData.get("contactPhone") as string | null)?.trim() ?? "";
   const address = (formData.get("address") as string | null)?.trim() ?? "";
 
-  await updateOwnBusiness(user.id, {
+  const updated = await updateOwnBusiness(user.id, {
     name,
     contactPhone: contactPhone || null,
     contactEmail: contactEmailRaw || null,
@@ -44,6 +44,9 @@ export async function updateBusinessProfile(
 
   revalidatePath("/business-profile");
   revalidatePath("/dashboard");
+  // specs/026-menu-data-caching FR-003/FR-004: the business name shows on
+  // the public menu header.
+  if (updated) updateTag(`menu:${updated.slug}`);
   return { ok: true };
 }
 
@@ -79,9 +82,14 @@ export async function uploadBusinessLogo(formData: FormData): Promise<UploadBusi
     return { ok: false, message: "The upload failed. Please try again." };
   }
 
-  await updateOwnBusiness(user.id, { logoUrl });
+  const updated = await updateOwnBusiness(user.id, { logoUrl });
 
   revalidatePath("/business-profile");
+  // specs/026-menu-data-caching FR-003/FR-004: the logo shows on the
+  // public menu header — named explicitly in that FR's own "business
+  // name/logo" list, even though data-model.md's file list only called out
+  // updateBusinessProfile, not this sibling action.
+  if (updated) updateTag(`menu:${updated.slug}`);
   return { ok: true, logoUrl };
 }
 

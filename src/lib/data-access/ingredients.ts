@@ -1,4 +1,5 @@
 import { and, asc, eq } from "drizzle-orm";
+import { updateTag } from "next/cache";
 import { db } from "@/lib/db/client";
 import { ingredients, itemIngredients } from "@/lib/db/schema";
 import { getOwnBusiness } from "./businesses";
@@ -43,6 +44,9 @@ export async function addOwnItemIngredient(
   if (!business) return false;
 
   await db.insert(itemIngredients).values({ itemId, ingredientId, businessId: business.id });
+  // specs/026-menu-data-caching FR-003/FR-004: an item's ingredient list is
+  // part of the public menu's content.
+  updateTag(`menu:${business.slug}`);
   return true;
 }
 
@@ -70,7 +74,9 @@ export async function removeOwnItemIngredient(
       )
     )
     .returning({ itemId: itemIngredients.itemId });
-  return deleted.length > 0;
+  const removed = deleted.length > 0;
+  if (removed) updateTag(`menu:${business.slug}`);
+  return removed;
 }
 
 export type PublicItemIngredient = { itemId: string; ingredientId: string; name: string };

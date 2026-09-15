@@ -1,4 +1,5 @@
 import { and, asc, desc, eq } from "drizzle-orm";
+import { updateTag } from "next/cache";
 import { db } from "@/lib/db/client";
 import { businesses, subscriptions, type planTypeEnum } from "@/lib/db/schema";
 import { getOwnBusiness } from "./businesses";
@@ -153,7 +154,7 @@ export async function adminActivateSubscription(
   startsAt: Date,
   expiresAt: Date
 ): Promise<Subscription | null> {
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [subscription] = await tx
       .update(subscriptions)
       .set({
@@ -169,13 +170,22 @@ export async function adminActivateSubscription(
 
     if (!subscription) return null;
 
-    await tx
+    const [business] = await tx
       .update(businesses)
       .set({ status: "active" })
-      .where(eq(businesses.id, subscription.businessId));
+      .where(eq(businesses.id, subscription.businessId))
+      .returning({ slug: businesses.slug });
 
-    return subscription;
+    return { subscription, slug: business?.slug };
   });
+
+  if (!result) return null;
+  // specs/026-menu-data-caching FR-003/FR-004/FR-009: activation flips the
+  // business to active — the public menu's own availability depends on it.
+  // Called after the transaction commits (updateTag is a cache API, not a
+  // DB operation, so it doesn't belong inside the transaction).
+  if (result.slug) updateTag(`menu:${result.slug}`);
+  return result.subscription;
 }
 
 /**

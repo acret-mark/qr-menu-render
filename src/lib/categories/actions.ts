@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { requireEditAccess } from "@/lib/auth/edit-access";
 import {
@@ -90,6 +90,9 @@ export async function saveCategory(input: {
   });
 
   revalidatePath("/categories");
+  // specs/026-menu-data-caching FR-003/FR-004: a category rename/creation
+  // affects the public menu's content.
+  updateTag(`menu:${business.slug}`);
   return { ok: true, hasStaleTranslation };
 }
 
@@ -101,8 +104,11 @@ export async function deleteCategory(input: { id: string }): Promise<DeleteCateg
   const editAccess = await requireEditAccess(user.id);
   if (!editAccess.ok) return { ok: false };
 
+  const business = await getOwnBusiness(user.id);
+
   const ok = await deleteOwnCategory(user.id, input.id);
   revalidatePath("/categories");
+  if (ok && business) updateTag(`menu:${business.slug}`);
   return { ok };
 }
 
@@ -119,7 +125,12 @@ export async function reorderCategory(input: {
   const editAccess = await requireEditAccess(user.id);
   if (!editAccess.ok) return { ok: false, reason: "locked" };
 
+  const business = await getOwnBusiness(user.id);
+
   const result = await reorderOwnCategory(user.id, input.id, input.direction);
-  if (result.ok) revalidatePath("/categories");
+  if (result.ok) {
+    revalidatePath("/categories");
+    if (business) updateTag(`menu:${business.slug}`);
+  }
   return result;
 }
