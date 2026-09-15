@@ -112,13 +112,20 @@ export async function adminGetBusinessById(businessId: string): Promise<Business
   return business ?? null;
 }
 
-export async function adminUpdateBusinessStatus(
+/**
+ * specs/019-admin-status-plan-override. Replaces adminUpdateBusinessStatus
+ * (no existing caller, research.md Decision 1) — a pure businesses.status/
+ * plan write, nothing else. Never touches subscriptions or trialEndsAt
+ * (spec FR-002/FR-007) — no transaction needed, single row/single table.
+ */
+export async function adminSetStatusAndPlan(
   businessId: string,
-  status: Business["status"]
+  status: Business["status"],
+  plan: Business["plan"]
 ): Promise<Business | null> {
   const [business] = await db
     .update(businesses)
-    .set({ status })
+    .set({ status, plan })
     .where(eq(businesses.id, businessId))
     .returning();
   return business ?? null;

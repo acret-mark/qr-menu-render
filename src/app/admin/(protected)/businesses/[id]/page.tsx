@@ -10,10 +10,11 @@ import { BusinessDetailTabs } from "@/components/admin/business-detail-tabs";
 import { BusinessOverviewPanel } from "@/components/admin/business-overview-panel";
 import { BusinessMenuPanel } from "@/components/admin/business-menu-panel";
 import { SubscriptionHistoryTable } from "@/components/admin/subscription-history-table";
+import { StatusPlanForm } from "@/components/admin/status-plan-form";
 
-// specs/018-business-detail. Session/isAdmin gate lives in
-// admin/(protected)/layout.tsx (specs/012) — this page only reads its own
-// data.
+// specs/018-business-detail / specs/019-admin-status-plan-override. Session/
+// isAdmin gate lives in admin/(protected)/layout.tsx (specs/012) — this
+// page only reads its own data.
 export default async function BusinessDetailPage({
   params,
 }: {
@@ -48,7 +49,12 @@ export default async function BusinessDetailPage({
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{business.name}</h1>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <StatusPlanForm
+            businessId={business.id}
+            currentStatus={business.status}
+            currentPlan={business.plan}
+          />
           {hasPendingSubscription && (
             <Link
               href="/admin/payments"
