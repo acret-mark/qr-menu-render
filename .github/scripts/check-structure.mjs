@@ -117,6 +117,7 @@ const ALLOWED_APP_FILES = new Set([
   "layout.tsx",
   "loading.tsx",
   "error.tsx",
+  "global-error.tsx",
   "not-found.tsx",
   "route.ts",
   "globals.css",
