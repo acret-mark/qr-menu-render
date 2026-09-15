@@ -4,14 +4,13 @@ import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 
-// Ports qr-menu-dev's AccountTabs near-verbatim (research.md Decision 1),
-// adapted for this project's "disabled until built" pattern (Support —
-// same convention already used for OwnerTabBar/AdminShell) since this
-// project's support-ticket-management admin spec hasn't shipped yet.
+// Ports qr-menu-dev's AccountTabs near-verbatim (research.md Decision 1).
+// Support was a disabled placeholder (matching OwnerTabBar/AdminShell's
+// convention) until specs/022-owner-support-tab built its content.
 const TABS = [
   { key: "profile", label: "Profile", title: "Business Profile", enabled: true },
   { key: "subscription", label: "Subscription", title: "Subscription", enabled: true },
-  { key: "support", label: "Support", title: "Support", enabled: false },
+  { key: "support", label: "Support", title: "Support", enabled: true },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
