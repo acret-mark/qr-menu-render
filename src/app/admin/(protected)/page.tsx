@@ -1,9 +1,17 @@
+import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { adminGetAllBusinesses } from "@/lib/data-access/businesses";
+import { BusinessStatusBadge } from "@/components/admin/business-status-badge";
+import { BusinessStatsSummary } from "@/components/admin/business-stats-summary";
 
-// Admin business list (spec 002 T025/T027). Session gate now lives in
-// admin/(protected)/layout.tsx (specs/012-payment-queue) — this page only
-// reads its own data.
+function formatCreatedDate(date: Date): string {
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+// specs/017-business-list — upgrades the bare-bones content specs/002/012
+// left here into a dense table with status badges, a stat-card summary,
+// and row-click navigation (research.md Decision 1: same file/URL,
+// content-only change). Session gate lives in admin/(protected)/layout.tsx.
 export default async function AdminPage() {
   // admin/(protected)/layout.tsx redirects unauthenticated/non-admin
   // visitors, but Next.js still evaluates this page concurrently with that
@@ -13,23 +21,76 @@ export default async function AdminPage() {
   const user = await getCurrentUser();
   if (!user?.isAdmin) return null;
 
-  const allBusinesses = await adminGetAllBusinesses();
+  const businesses = await adminGetAllBusinesses();
+
+  const total = businesses.length;
+  const active = businesses.filter((b) => b.status === "active").length;
+  const trial = businesses.filter((b) => b.status === "trial").length;
+  const needsAttention = businesses.filter(
+    (b) => b.status === "pending" || b.status === "suspended"
+  ).length;
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 py-12">
-      <h1 className="text-2xl font-semibold">Admin — All Businesses</h1>
-      <p className="text-muted-foreground">Signed in as {user.email}</p>
-      <div className="flex flex-col gap-2">
-        {allBusinesses.map((business) => (
-          <div key={business.id} className="rounded-lg border border-border p-4">
-            <p className="font-medium">{business.name}</p>
-            <p className="text-sm text-muted-foreground">
-              {business.slug} · {business.status} · {business.plan}
-            </p>
-          </div>
-        ))}
-        {allBusinesses.length === 0 && (
-          <p className="text-sm text-muted-foreground">No businesses yet.</p>
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-semibold">Businesses</h1>
+        <p className="text-sm text-muted-foreground">All registered Hapag accounts.</p>
+      </div>
+
+      <BusinessStatsSummary total={total} active={active} trial={trial} needsAttention={needsAttention} />
+
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        {businesses.length === 0 ? (
+          <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+            No businesses registered yet.
+          </p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-muted-foreground">
+                <th className="px-5 py-3 font-medium">Business</th>
+                <th className="px-5 py-3 font-medium">Plan</th>
+                <th className="px-5 py-3 font-medium">Status</th>
+                <th className="px-5 py-3 font-medium">Signed Up</th>
+              </tr>
+            </thead>
+            <tbody>
+              {businesses.map((business) => {
+                // Row-click via a wrapping Link per cell, not a client
+                // onClick handler (research.md Decision 3) — a plain <a>
+                // can't validly wrap a <tr>, so each cell's content is its
+                // own block-level Link to the same destination instead.
+                const href = `/admin/businesses/${business.id}`;
+                return (
+                  <tr
+                    key={business.id}
+                    className="border-b border-border last:border-none hover:bg-muted"
+                  >
+                    <td className="p-0">
+                      <Link href={href} className="block px-5 py-3.5">
+                        {business.name}
+                      </Link>
+                    </td>
+                    <td className="p-0">
+                      <Link href={href} className="block px-5 py-3.5 capitalize">
+                        {business.plan}
+                      </Link>
+                    </td>
+                    <td className="p-0">
+                      <Link href={href} className="block px-5 py-3.5">
+                        <BusinessStatusBadge status={business.status} />
+                      </Link>
+                    </td>
+                    <td className="p-0">
+                      <Link href={href} className="block px-5 py-3.5">
+                        {formatCreatedDate(business.createdAt)}
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
     </div>
