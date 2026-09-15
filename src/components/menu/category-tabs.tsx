@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { MenuItemCard, type MenuDisplayItem } from "@/components/menu/menu-item-card";
 
@@ -10,9 +9,17 @@ export type MenuDisplayCategory = {
   items: MenuDisplayItem[];
 };
 
-export function CategoryTabs({ categories }: { categories: MenuDisplayCategory[] }) {
-  const [activeCategoryId, setActiveCategoryId] = useState(categories[0]?.id ?? "");
-
+export function CategoryTabs({
+  categories,
+  activeCategoryId,
+  onSelectCategory,
+  onOpenItem,
+}: {
+  categories: MenuDisplayCategory[];
+  activeCategoryId: string | null;
+  onSelectCategory: (categoryId: string) => void;
+  onOpenItem: (itemId: string) => void;
+}) {
   if (categories.length === 0) {
     return <p className="px-4 py-6 text-sm text-muted-foreground">No menu items yet.</p>;
   }
@@ -27,7 +34,7 @@ export function CategoryTabs({ categories }: { categories: MenuDisplayCategory[]
           <button
             key={category.id}
             type="button"
-            onClick={() => setActiveCategoryId(category.id)}
+            onClick={() => onSelectCategory(category.id)}
             className={cn(
               "shrink-0 rounded-full border px-3.5 py-1.5 text-sm whitespace-nowrap",
               category.id === activeCategoryId
@@ -50,7 +57,7 @@ export function CategoryTabs({ categories }: { categories: MenuDisplayCategory[]
             )}
           >
             {category.items.map((item) => (
-              <MenuItemCard key={item.id} item={item} />
+              <MenuItemCard key={item.id} item={item} onOpen={() => onOpenItem(item.id)} />
             ))}
           </ul>
         ))}

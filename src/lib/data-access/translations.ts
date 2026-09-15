@@ -142,3 +142,24 @@ export async function getPublicCategoryTranslations(
         : eq(categoryTranslations.businessId, businessId)
     );
 }
+
+/**
+ * Public-scoped (specs/008-search-item-detail) — same shape/trust-chain as
+ * getPublicItemTranslations/getPublicCategoryTranslations above.
+ */
+export async function getPublicIngredientTranslations(
+  businessId: string,
+  language?: DisplayLanguage
+): Promise<IngredientTranslation[]> {
+  return db
+    .select()
+    .from(ingredientTranslations)
+    .where(
+      language
+        ? and(
+            eq(ingredientTranslations.businessId, businessId),
+            eq(ingredientTranslations.languageCode, language)
+          )
+        : eq(ingredientTranslations.businessId, businessId)
+    );
+}

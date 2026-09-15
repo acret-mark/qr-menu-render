@@ -45,3 +45,29 @@ export async function addOwnItemIngredient(
   await db.insert(itemIngredients).values({ itemId, ingredientId, businessId: business.id });
   return true;
 }
+
+export type PublicItemIngredient = { itemId: string; ingredientId: string; name: string };
+
+/**
+ * Public-scoped (specs/008-search-item-detail's public-ingredients-boundary
+ * contract, extending specs/007's public-visibility-boundary.md). `businessId`
+ * MUST already come from a non-null `getPublicBusinessBySlug` result in the
+ * same request — this function does not re-check status itself. Returns
+ * every ingredient row across the business's items in one query; the caller
+ * groups by itemId. An item with no ingredients simply contributes no rows —
+ * never an error.
+ */
+export async function getPublicItemIngredients(
+  businessId: string
+): Promise<PublicItemIngredient[]> {
+  const rows = await db
+    .select({
+      itemId: itemIngredients.itemId,
+      ingredientId: ingredients.id,
+      name: ingredients.name,
+    })
+    .from(itemIngredients)
+    .innerJoin(ingredients, eq(ingredients.id, itemIngredients.ingredientId))
+    .where(eq(itemIngredients.businessId, businessId));
+  return rows;
+}

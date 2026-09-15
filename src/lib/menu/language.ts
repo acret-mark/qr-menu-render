@@ -3,6 +3,7 @@ import { displayLanguageEnum, type sourceLanguageEnum } from "@/lib/db/schema";
 import type {
   CategoryTranslation,
   DisplayLanguage,
+  IngredientTranslation,
   ItemTranslation,
 } from "@/lib/data-access/translations";
 
@@ -99,5 +100,24 @@ export function applyPublicTranslations<
       ...item,
       description: descriptionByItemId.get(item.id) ?? item.description,
     })),
+  }));
+}
+
+/**
+ * The same nullish-coalesce-only fallback rule as applyPublicTranslations
+ * above (translated ?? source, never a third tier), applied to ingredient
+ * names (specs/008-search-item-detail FR-017 — extends spec 007 FR-011's
+ * translatable-field set from two to three).
+ */
+export function applyIngredientTranslations<TIngredient extends { id: string; name: string }>(
+  ingredients: TIngredient[],
+  ingredientTranslations: IngredientTranslation[]
+): TIngredient[] {
+  const nameByIngredientId = new Map(
+    ingredientTranslations.map((row) => [row.ingredientId, row.translatedName])
+  );
+  return ingredients.map((ingredient) => ({
+    ...ingredient,
+    name: nameByIngredientId.get(ingredient.id) ?? ingredient.name,
   }));
 }
