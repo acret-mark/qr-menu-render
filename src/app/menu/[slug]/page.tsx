@@ -1,11 +1,12 @@
-import { getPublicBusinessBySlug } from "@/lib/data-access/businesses";
-import { getPublicCategoriesWithItems } from "@/lib/data-access/categories";
-import { getPublicItemIngredients } from "@/lib/data-access/ingredients";
+import type { getPublicIngredientTranslations } from "@/lib/data-access/translations";
 import {
-  getPublicCategoryTranslations,
-  getPublicIngredientTranslations,
-  getPublicItemTranslations,
-} from "@/lib/data-access/translations";
+  getCachedPublicBusinessBySlug,
+  getCachedPublicCategoriesWithItems,
+  getCachedPublicCategoryTranslations,
+  getCachedPublicIngredientTranslations,
+  getCachedPublicItemIngredients,
+  getCachedPublicItemTranslations,
+} from "@/lib/menu/cache";
 import {
   applyIngredientTranslations,
   applyPublicTranslations,
@@ -16,12 +17,27 @@ import { MenuSearch } from "@/components/menu/menu-search";
 import { LanguageSelector } from "@/components/menu/language-selector";
 import { TranslationUnavailableBanner } from "@/components/menu/translation-unavailable-banner";
 import { MenuNotAvailable } from "@/components/menu/menu-not-available";
+import { FooterRegistrationCta } from "@/components/menu/footer-registration-cta";
+import { OfflineIndicator } from "@/components/menu/offline-indicator";
+import type { Metadata } from "next";
+
+// specs/033-search-engine-indexing-control FR-006/research.md Decision 5: a
+// plain static export, not generateMetadata — this route has no existing
+// dynamic metadata to merge with, and a static export structurally
+// guarantees no per-business title/description is ever added here (FR-012).
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 // Public menu display (specs/007-public-menu-display) — the first
 // unauthenticated, customer-facing page in the project. getPublicBusinessBySlug
 // is the ONE place visibility (status IN ('active','trial')) is checked
 // (contracts/public-visibility-boundary.md) — every other call below only
-// ever runs after that check has already succeeded.
+// ever runs after that check has already succeeded. specs/026-menu-data-
+// caching: every read below goes through cache.ts's unstable_cache
+// wrappers instead of the raw data-access functions directly — same
+// results, same call order, just reused across repeat/concurrent requests
+// until an owner/admin edit calls updateTag(`menu:${slug}`).
 export default async function PublicMenuPage({
   params,
   searchParams,
@@ -32,15 +48,15 @@ export default async function PublicMenuPage({
   const { slug } = await params;
   const { cat: initialCategoryIndex, q: initialQuery, item: initialItemIndex } =
     await searchParams;
-  const business = await getPublicBusinessBySlug(slug);
+  const business = await getCachedPublicBusinessBySlug(slug);
 
   if (!business) {
-    return <MenuNotAvailable />;
+    return <MenuNotAvailable slug={slug} />;
   }
 
   const [categories, itemIngredientRows] = await Promise.all([
-    getPublicCategoriesWithItems(business.id),
-    getPublicItemIngredients(business.id),
+    getCachedPublicCategoriesWithItems(slug, business.id),
+    getCachedPublicItemIngredients(slug, business.id),
   ]);
 
   const isPro = business.plan === "pro";
@@ -56,9 +72,9 @@ export default async function PublicMenuPage({
     if (language !== business.sourceLanguage) {
       const [categoryTranslations, itemTranslations, fetchedIngredientTranslations] =
         await Promise.all([
-          getPublicCategoryTranslations(business.id, language),
-          getPublicItemTranslations(business.id, language),
-          getPublicIngredientTranslations(business.id, language),
+          getCachedPublicCategoryTranslations(slug, business.id, language),
+          getCachedPublicItemTranslations(slug, business.id, language),
+          getCachedPublicIngredientTranslations(slug, business.id, language),
         ]);
       ingredientTranslations = fetchedIngredientTranslations;
 
@@ -100,6 +116,7 @@ export default async function PublicMenuPage({
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col">
+      <OfflineIndicator />
       <MenuHeader
         name={business.name}
         logoUrl={business.logoUrl}
@@ -114,6 +131,7 @@ export default async function PublicMenuPage({
         initialQuery={initialQuery}
         initialItemIndex={initialItemIndex}
       />
+      {business.plan === "standard" && <FooterRegistrationCta />}
     </div>
   );
 }

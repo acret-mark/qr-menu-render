@@ -174,3 +174,18 @@ export async function getPublicCategoriesWithItems(
     }))
     .filter((category) => category.items.length > 0);
 }
+
+/**
+ * Admin-scoped (contracts/data-access-layer.md category 2, specs/018-
+ * business-detail). No identity parameter — matches
+ * adminGetAllSubscriptionsForBusiness's existing exact shape, trusted
+ * entirely by the caller having already verified isAdmin (specs/012's
+ * shell).
+ */
+export async function adminGetCategoriesForBusiness(businessId: string): Promise<Category[]> {
+  return db
+    .select()
+    .from(categories)
+    .where(eq(categories.businessId, businessId))
+    .orderBy(categories.sortOrder);
+}

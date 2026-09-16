@@ -14,14 +14,22 @@ export type CategoryListItem = {
   hasStaleTranslation: boolean;
 };
 
-export function CategoryList({ categories }: { categories: CategoryListItem[] }) {
+export function CategoryList({
+  categories,
+  locked = false,
+}: {
+  categories: CategoryListItem[];
+  locked?: boolean;
+}) {
   const [editing, setEditing] = useState<CategoryListItem | null>(null);
   const [deleting, setDeleting] = useState<CategoryListItem | null>(null);
 
   if (categories.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No categories yet. Use the + button to add your first one.
+        {locked
+          ? "No categories yet."
+          : "No categories yet. Use the + button to add your first one."}
       </p>
     );
   }
@@ -34,11 +42,17 @@ export function CategoryList({ categories }: { categories: CategoryListItem[] })
             key={category.id}
             className="flex items-center gap-3 px-4 py-3"
           >
-            <ReorderControls
-              categoryId={category.id}
-              isFirst={index === 0}
-              isLast={index === categories.length - 1}
-            />
+            {/* specs/020-unified-subscription-lifecycle FR-012: reorder is
+                a menu-editing action too — hidden, not just disabled, when
+                locked (the server-side reorderCategory already rejects it
+                either way). */}
+            {!locked && (
+              <ReorderControls
+                categoryId={category.id}
+                isFirst={index === 0}
+                isLast={index === categories.length - 1}
+              />
+            )}
 
             <div className="flex min-w-0 flex-1 flex-col">
               <span className="truncate font-medium">{category.name}</span>
@@ -53,24 +67,28 @@ export function CategoryList({ categories }: { categories: CategoryListItem[] })
               )}
             </div>
 
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Edit ${category.name}`}
-              onClick={() => setEditing(category)}
-            >
-              <Pencil />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Delete ${category.name}`}
-              onClick={() => setDeleting(category)}
-            >
-              <Trash2 />
-            </Button>
+            {!locked && (
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Edit ${category.name}`}
+                  onClick={() => setEditing(category)}
+                >
+                  <Pencil />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Delete ${category.name}`}
+                  onClick={() => setDeleting(category)}
+                >
+                  <Trash2 />
+                </Button>
+              </>
+            )}
           </li>
         ))}
       </ul>

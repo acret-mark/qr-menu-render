@@ -114,6 +114,19 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   expires: timestamp("expires", { withTimezone: true, mode: "date" }).notNull(),
 });
 
+// Email-confirmation tokens (specs/011-email-confirmation) — structurally
+// identical to passwordResetTokens (data-model.md, research.md Decision 1):
+// a second, purpose-specific table rather than a shared polymorphic one.
+// One-time use: consumed (deleted) inside auth.config.ts's authorize()
+// confirmationToken branch, the single place this token is ever redeemed.
+export const emailConfirmationTokens = pgTable("email_confirmation_tokens", {
+  token: text("token").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { withTimezone: true, mode: "date" }).notNull(),
+});
+
 // ============================================================
 // Ported domain tables — same shape as qr-menu-dev, `owner_id`/`activated_by`
 // repointed at `users.id`, no RLS (Constitution Principle II — see

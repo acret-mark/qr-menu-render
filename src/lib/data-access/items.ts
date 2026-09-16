@@ -127,3 +127,15 @@ export async function getPublicDisplayedItems(businessId: string): Promise<Item[
     .from(items)
     .where(and(eq(items.businessId, businessId), eq(items.isDisplayed, true)));
 }
+
+/**
+ * Admin-scoped (contracts/data-access-layer.md category 2, specs/018-
+ * business-detail, research.md Decision 2). Deliberately unfiltered —
+ * returns every item regardless of isDisplayed/isSoldOut, the opposite
+ * filtering posture from getPublicDisplayedItems by design: diagnostic
+ * oversight, not the customer-facing subset. No identity parameter,
+ * trusted entirely by the caller having already verified isAdmin.
+ */
+export async function adminGetItemsForBusiness(businessId: string): Promise<Item[]> {
+  return db.select().from(items).where(eq(items.businessId, businessId));
+}

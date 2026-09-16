@@ -1,4 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
+import { updateTag } from "next/cache";
 import { db } from "@/lib/db/client";
 import { businesses } from "@/lib/db/schema";
 import type { businesses as BusinessesTable } from "@/lib/db/schema";
@@ -42,6 +43,29 @@ export async function getOwnBusiness(ownerId: string): Promise<Business | null> 
     .where(eq(businesses.ownerId, ownerId))
     .limit(1);
   return business ?? null;
+}
+
+/**
+ * Owner-scoped (specs/010-business-profile-editing): partial update to a
+ * business's own editable profile fields — never touches slug, ownerId,
+ * plan, or status. Resolves ownerId -> own business via getOwnBusiness
+ * first, same trust chain as updateOwnItem/updateOwnCategory; never trusts
+ * a businessId from client input. Returns null if the caller has no
+ * business.
+ */
+export async function updateOwnBusiness(
+  ownerId: string,
+  input: Partial<Pick<Business, "name" | "logoUrl" | "contactPhone" | "contactEmail" | "address">>
+): Promise<Business | null> {
+  const business = await getOwnBusiness(ownerId);
+  if (!business) return null;
+
+  const [updated] = await db
+    .update(businesses)
+    .set(input)
+    .where(eq(businesses.id, business.id))
+    .returning();
+  return updated ?? null;
 }
 
 /**
@@ -89,14 +113,24 @@ export async function adminGetBusinessById(businessId: string): Promise<Business
   return business ?? null;
 }
 
-export async function adminUpdateBusinessStatus(
+/**
+ * specs/019-admin-status-plan-override. Replaces adminUpdateBusinessStatus
+ * (no existing caller, research.md Decision 1) — a pure businesses.status/
+ * plan write, nothing else. Never touches subscriptions or trialEndsAt
+ * (spec FR-002/FR-007) — no transaction needed, single row/single table.
+ */
+export async function adminSetStatusAndPlan(
   businessId: string,
-  status: Business["status"]
+  status: Business["status"],
+  plan: Business["plan"]
 ): Promise<Business | null> {
   const [business] = await db
     .update(businesses)
-    .set({ status })
+    .set({ status, plan })
     .where(eq(businesses.id, businessId))
     .returning();
+  // specs/026-menu-data-caching FR-003/FR-004/FR-009: a manual status/plan
+  // override affects the public menu's availability and Pro-tier features.
+  if (business) updateTag(`menu:${business.slug}`);
   return business ?? null;
 }

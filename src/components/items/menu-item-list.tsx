@@ -10,7 +10,13 @@ export type MenuItemListCategory = {
   items: MenuItemRowItem[];
 };
 
-export function MenuItemList({ categories }: { categories: MenuItemListCategory[] }) {
+export function MenuItemList({
+  categories,
+  locked = false,
+}: {
+  categories: MenuItemListCategory[];
+  locked?: boolean;
+}) {
   const [activeCategoryId, setActiveCategoryId] = useState(categories[0]?.id ?? "");
   const activeCategory = categories.find((c) => c.id === activeCategoryId) ?? categories[0];
 
@@ -41,7 +47,7 @@ export function MenuItemList({ categories }: { categories: MenuItemListCategory[
       {activeCategory && activeCategory.items.length > 0 && (
         <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
           {activeCategory.items.map((item) => (
-            <MenuItemRow key={item.id} item={item} />
+            <MenuItemRow key={item.id} item={item} locked={locked} />
           ))}
         </ul>
       )}

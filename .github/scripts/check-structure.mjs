@@ -78,6 +78,13 @@ const ALLOWED_SECRET_FILES = new Set([
   join(SRC, "lib", "db", "client.ts"),
   join(SRC, "lib", "email", "google-smtp-client.ts"),
   join(SRC, "lib", "cloudinary", "client.ts"),
+  // Each CRON_SECRET-gated route checks its own bearer token directly
+  // (matching render.yaml's per-route curl invocation) — unlike
+  // DATABASE_URL/GMAIL_SMTP_APP_PASSWORD/CLOUDINARY_API_SECRET, which
+  // centralize behind one client file, there's no single shared client to
+  // centralize a per-request header check behind.
+  join(SRC, "app", "api", "cron", "subscription-expiry", "route.ts"),
+  join(SRC, "app", "api", "cron", "payment-reminders", "route.ts"),
 ]);
 for (const file of codeFiles) {
   if (ALLOWED_SECRET_FILES.has(file)) continue;
@@ -111,10 +118,16 @@ const ALLOWED_APP_FILES = new Set([
   "layout.tsx",
   "loading.tsx",
   "error.tsx",
+  "global-error.tsx",
   "not-found.tsx",
   "route.ts",
   "globals.css",
+  "marketing.css",
   "favicon.ico",
+  // Next.js metadata-route convention files (specs/033-search-engine-
+  // indexing-control) — framework-recognized, not arbitrary shared logic.
+  "robots.ts",
+  "sitemap.ts",
 ]);
 const APP_DIR = join(SRC, "app");
 try {
