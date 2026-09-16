@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { ImageOff, Star, X } from "lucide-react";
+import { cloudinaryLoader } from "@/lib/images/cloudinary";
 import { cn } from "@/lib/utils";
 import type { MenuDisplayItem } from "@/components/menu/menu-item-card";
 
@@ -27,6 +29,9 @@ export function ItemDetailSheet({
   onClose: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  // specs/034-performance-optimization-pass FR-009/Edge Cases: same
+  // load-failure fallback as MenuItemCard's thumbnail.
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   useEffect(() => {
     const id = setTimeout(() => setOpen(true), 20);
@@ -87,9 +92,17 @@ export function ItemDetailSheet({
               item.isSoldOut && "grayscale-[70%]"
             )}
           >
-            {item.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- Cloudinary already optimizes/transforms this URL
-              <img src={item.photoUrl} alt="" className="size-full object-cover" />
+            {item.photoUrl && !photoFailed ? (
+              <Image
+                loader={cloudinaryLoader}
+                src={item.photoUrl}
+                alt=""
+                fill
+                sizes="(min-width: 448px) 448px, 100vw"
+                className="object-cover"
+                priority
+                onError={() => setPhotoFailed(true)}
+              />
             ) : (
               <div className="flex size-full items-center justify-center">
                 <ImageOff className="size-12 opacity-85" strokeWidth={1.2} />

@@ -1,4 +1,9 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
 import { Star, ImageOff } from "lucide-react";
+import { cloudinaryLoader } from "@/lib/images/cloudinary";
 import { cn } from "@/lib/utils";
 
 export type MenuDisplayItem = {
@@ -26,6 +31,12 @@ export function MenuItemCard({
   item: MenuDisplayItem;
   onOpen?: () => void;
 }) {
+  // specs/034-performance-optimization-pass FR-009/Edge Cases: a photo that
+  // fails to load or transform (not merely absent) falls back to the same
+  // ImageOff treatment as a missing photoUrl, instead of the browser's
+  // native broken-image glyph breaking the row's layout.
+  const [failed, setFailed] = useState(false);
+
   return (
     <li>
       <button
@@ -35,12 +46,15 @@ export function MenuItemCard({
         className="flex w-full gap-3 py-3 text-left disabled:cursor-default"
       >
         <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-          {item.photoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- Cloudinary already optimizes/transforms this URL
-            <img
+          {item.photoUrl && !failed ? (
+            <Image
+              loader={cloudinaryLoader}
               src={item.photoUrl}
               alt=""
-              className={cn("size-full object-cover", item.isSoldOut && "grayscale-[70%]")}
+              fill
+              sizes="64px"
+              className={cn("object-cover", item.isSoldOut && "grayscale-[70%]")}
+              onError={() => setFailed(true)}
             />
           ) : (
             <div
