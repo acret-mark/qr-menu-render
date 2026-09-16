@@ -97,8 +97,10 @@ export async function registerOwner({
 
   // Fire-and-forget: a welcome-email failure must never turn a successful
   // registration into a failure result, matching qr-menu-dev's
-  // createBusinessForOwner behavior.
-  await sendWelcomeEmail({ toEmail: normalizedEmail, businessName }).catch((err) => {
+  // createBusinessForOwner behavior. Not awaited (the comment's own intent,
+  // now actually matching it) so a slow/blocked outbound SMTP connection
+  // can't hang the registration form on top of not failing it.
+  sendWelcomeEmail({ toEmail: normalizedEmail, businessName }).catch((err) => {
     console.error("Failed to send welcome email", err);
   });
 
