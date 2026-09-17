@@ -30,12 +30,7 @@ export async function requestPasswordResetAction(email: string): Promise<Request
     await db.insert(passwordResetTokens).values({ token, userId: user.id, expires });
 
     const resetUrl = `${SITE_URL}/reset-password?token=${token}`;
-    // Deliberately not awaited — a slow/blocked outbound SMTP connection
-    // (e.g. Render's free tier dropping the connection, ETIMEDOUT) must
-    // never hang this action, which the client waits on to leave its
-    // "Sending…" state. The token is already persisted above regardless of
-    // whether the email itself lands.
-    sendPasswordResetEmail({ toEmail: normalizedEmail, resetUrl }).catch((err) => {
+    await sendPasswordResetEmail({ toEmail: normalizedEmail, resetUrl }).catch((err) => {
       console.error("Failed to send password reset email", err);
     });
   }

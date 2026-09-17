@@ -39,9 +39,7 @@ export async function requestEmailConfirmation(email: string): Promise<RequestCo
     await db.insert(emailConfirmationTokens).values({ token, userId: user.id, expires });
 
     const confirmUrl = `${SITE_URL}/confirm-email?token=${token}`;
-    // Deliberately not awaited — see password-reset.ts's identical comment.
-    // A slow/blocked outbound SMTP connection must never hang this action.
-    sendEmailConfirmation({ toEmail: normalizedEmail, confirmUrl }).catch((err) => {
+    await sendEmailConfirmation({ toEmail: normalizedEmail, confirmUrl }).catch((err) => {
       console.error("Failed to send email confirmation", err);
     });
   }
