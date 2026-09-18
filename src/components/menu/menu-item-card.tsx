@@ -21,7 +21,7 @@ export type MenuDisplayItem = {
 
 function formatPrice(price: string): string {
   const n = Number(price);
-  return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 export function MenuItemCard({
@@ -43,50 +43,54 @@ export function MenuItemCard({
         type="button"
         onClick={onOpen}
         disabled={!onOpen}
-        className="flex w-full gap-3 py-3 text-left disabled:cursor-default"
+        className="flex w-full gap-4 text-left disabled:cursor-default"
       >
-        <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+        <div
+          className={cn(
+            "relative h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-primary-foreground/80",
+            item.isSoldOut && "grayscale-[70%]"
+          )}
+        >
           {item.photoUrl && !failed ? (
             <Image
               loader={cloudinaryLoader}
               src={item.photoUrl}
               alt=""
               fill
-              sizes="64px"
-              className={cn("object-cover", item.isSoldOut && "grayscale-[70%]")}
+              sizes="128px"
+              className="object-cover"
               onError={() => setFailed(true)}
             />
           ) : (
-            <div
-              className={cn(
-                "flex size-full items-center justify-center",
-                item.isSoldOut && "grayscale-[70%]"
-              )}
-            >
-              <ImageOff className="size-5 text-muted-foreground" />
+            <div className="flex size-full items-center justify-center">
+              <ImageOff size={36} strokeWidth={1.5} className="opacity-85" />
             </div>
           )}
           {item.isSoldOut && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <span className="text-xs font-bold text-white">Sold Out</span>
+              <span className="font-heading text-base font-bold text-white">Sold Out</span>
             </div>
           )}
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="flex items-center gap-1.5 font-medium">
+        <div className="flex min-w-0 flex-1 flex-col pt-1">
+          <div className="flex items-center gap-1.5 font-heading text-[1.05rem] font-bold">
+            <span className="truncate">{item.name}</span>
             {item.isBestSeller && (
               <Star
-                className="size-3.5 shrink-0 fill-amber-400 text-amber-400"
+                className="size-4 shrink-0 fill-warning text-warning"
                 aria-label="Best seller"
               />
             )}
-            <span className="truncate">{item.name}</span>
-          </span>
+          </div>
           {item.description && (
-            <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
+            <div className="mt-1 line-clamp-2 text-[0.85rem] text-muted-foreground">
+              {item.description}
+            </div>
           )}
-          <span className="text-sm font-medium">{formatPrice(item.price)}</span>
+          <div className="mt-2 text-[1.05rem] font-bold text-accent tabular-nums">
+            {formatPrice(item.price)}
+          </div>
         </div>
       </button>
     </li>

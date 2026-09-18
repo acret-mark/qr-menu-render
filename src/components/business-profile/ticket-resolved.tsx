@@ -39,7 +39,7 @@ export function TicketResolved({
 
         <div className="mt-4 border-t border-dashed border-border pt-4">
           <div className="text-sm font-medium text-muted-foreground">
-            Hapag Support
+            ACRET Support
             {ticket.repliedAt && ` · ${formatAdminDate(ticket.repliedAt)}`}
           </div>
           <p className="mt-1.5 text-sm whitespace-pre-wrap">

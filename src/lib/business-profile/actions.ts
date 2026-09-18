@@ -28,7 +28,10 @@ export async function updateBusinessProfile(
   }
 
   const contactEmailRaw = (formData.get("contactEmail") as string | null)?.trim() ?? "";
-  if (contactEmailRaw && !isValidEmail(contactEmailRaw)) {
+  if (!contactEmailRaw) {
+    return { ok: false, field: "contactEmail", message: "Contact email is required." };
+  }
+  if (!isValidEmail(contactEmailRaw)) {
     return { ok: false, field: "contactEmail", message: "Enter a valid email address." };
   }
 

@@ -30,7 +30,7 @@ export type RateLimitResult = { allowed: true } | { allowed: false; retryAfterSe
  * equally, without needing to distinguish them).
  */
 export async function checkRateLimit(
-  action: "login" | "register" | "resend-confirmation"
+  action: "login" | "register" | "resend-confirmation" | "password-reset"
 ): Promise<RateLimitResult> {
   const key = await getClientKey(action);
   const now = Date.now();

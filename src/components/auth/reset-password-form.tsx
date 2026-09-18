@@ -7,7 +7,9 @@ import { resetPasswordAction } from "@/lib/auth/password-reset";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const MIN_PASSWORD_LENGTH = 8;
+// Matches register-form.tsx's MIN_PASSWORD_LENGTH — do not diverge from that
+// convention here.
+const MIN_PASSWORD_LENGTH = 6;
 
 type FieldErrors = Partial<Record<"password" | "confirmPassword", string>>;
 

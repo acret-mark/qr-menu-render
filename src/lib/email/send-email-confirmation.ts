@@ -1,4 +1,5 @@
 import { sendMail } from "./google-smtp-client";
+import { renderEmailHtml } from "./template";
 
 export type SendEmailConfirmationInput = {
   toEmail: string;
@@ -15,6 +16,14 @@ export async function sendEmailConfirmation({
   toEmail,
   confirmUrl,
 }: SendEmailConfirmationInput): Promise<SendEmailConfirmationResult> {
+  const html = renderEmailHtml({
+    heading: "Confirm your account",
+    paragraphs: ["Thanks for registering with Hapag — one more step before you're set up."],
+    cta: { label: "Confirm your account", url: confirmUrl },
+    highlight:
+      "This link expires in 1 hour. If you didn't create this account, you can ignore this email.",
+  });
+
   return sendMail({
     to: toEmail,
     subject: "Confirm your Hapag account",
@@ -25,5 +34,6 @@ export async function sendEmailConfirmation({
       "",
       "This link expires in 1 hour. If you didn't create this account, you can ignore this email.",
     ].join("\n"),
+    html,
   });
 }

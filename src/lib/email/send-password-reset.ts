@@ -1,4 +1,5 @@
 import { sendMail } from "./google-smtp-client";
+import { renderEmailHtml } from "./template";
 
 export type SendPasswordResetEmailInput = {
   toEmail: string;
@@ -18,6 +19,14 @@ export async function sendPasswordResetEmail({
   toEmail,
   resetUrl,
 }: SendPasswordResetEmailInput): Promise<SendPasswordResetEmailResult> {
+  const html = renderEmailHtml({
+    heading: "Reset your password",
+    paragraphs: ["We received a request to reset your Hapag password."],
+    cta: { label: "Reset your password", url: resetUrl },
+    highlight:
+      "This link expires in 1 hour. If you didn't request this, you can ignore this email.",
+  });
+
   return sendMail({
     to: toEmail,
     subject: "Reset your Hapag password",
@@ -28,5 +37,6 @@ export async function sendPasswordResetEmail({
       "",
       "This link expires in 1 hour. If you didn't request this, you can ignore this email.",
     ].join("\n"),
+    html,
   });
 }

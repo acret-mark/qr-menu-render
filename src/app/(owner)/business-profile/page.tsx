@@ -54,13 +54,18 @@ export default async function BusinessProfilePage() {
             // A "trial" plan is only ever admin-granted directly as active
             // (adminGrantTrialSubscription) — this owner-facing submission
             // flow never targets it, so it's treated the same as its
-            // nearest paid tier for display purposes here.
+            // nearest paid tier for pricing-display purposes here. Trial
+            // status itself (for the "Trial" label / "Trial ends" date row)
+            // is passed separately below via `isTrial`, matching
+            // qr-menu-dev's own businesses.plan/status split.
             currentPlan={business.plan === "trial" ? "standard" : business.plan}
+            isTrial={business.status === "trial"}
             latest={
               latest && {
                 plan: latest.plan,
                 status: latest.status,
                 paymentMethod: latest.paymentMethod,
+                expiresAt: latest.expiresAt,
               }
             }
           />

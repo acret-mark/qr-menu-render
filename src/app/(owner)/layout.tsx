@@ -5,6 +5,7 @@ import { getOwnBusiness, type Business } from "@/lib/data-access/businesses";
 import { getSubscriptionAccess } from "@/lib/subscriptions/access-gate";
 import { OwnerHeader } from "@/components/dashboard/owner-header";
 import { OwnerTabBar } from "@/components/dashboard/owner-tab-bar";
+import { StatusBanner } from "@/components/dashboard/status-banner";
 import { SubscriptionLockedBanner } from "@/components/dashboard/subscription-locked-banner";
 
 // specs/033-search-engine-indexing-control FR-007: covers
@@ -48,6 +49,13 @@ const RECOGNIZED_BUSINESS_STATUSES: readonly Business["status"][] = [
  * read-only lock (a live computation, never a stored value — FR-004) and
  * renders the persistent banner on every owner screen, not just the
  * dashboard page.
+ *
+ * The "pending" status banner is likewise rendered here rather than only on
+ * the dashboard page, matching qr-menu-dev's owner-shell.tsx — a business
+ * awaiting payment verification needs the nudge on every owner screen it
+ * visits, not just the one it happens to land on. "pending" and the
+ * subscription-lock banner are mutually exclusive, same as dev: a pending
+ * business shows the pending banner, never both.
  */
 export default async function OwnerLayout({
   children,
@@ -72,8 +80,9 @@ export default async function OwnerLayout({
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <OwnerHeader />
-      {locked && <SubscriptionLockedBanner />}
+      <OwnerHeader businessName={business.name} />
+      {business.status === "pending" && <StatusBanner status="pending" />}
+      {business.status !== "pending" && locked && <SubscriptionLockedBanner />}
       <main className="flex-1 pb-20">{children}</main>
       <OwnerTabBar />
     </div>

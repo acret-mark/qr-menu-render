@@ -15,14 +15,23 @@ export type ReplyToTicketResult = { ok: true; ticket: SupportTicket } | { ok: fa
  * requireAdmin() throws for a non-admin caller (fail-closed, matching every
  * other admin-scoped action in this project) — defense in depth against a
  * direct server-action call bypassing the UI.
+ *
+ * `status` is optional and only forwarded when the caller passed one
+ * explicitly — adminReplyToSupportTicket only defaults to "resolved" in
+ * that absence, so an admin's own explicit status pick isn't overridden by
+ * sending a reply.
  */
-export async function replyToTicketAction(ticketId: string, reply: string): Promise<ReplyToTicketResult> {
+export async function replyToTicketAction(
+  ticketId: string,
+  reply: string,
+  status?: SupportTicket["status"]
+): Promise<ReplyToTicketResult> {
   await requireAdmin();
 
   const trimmed = reply.trim();
   if (!trimmed) return { ok: false, reason: "empty-reply" };
 
-  const ticket = await adminReplyToSupportTicket(ticketId, trimmed);
+  const ticket = await adminReplyToSupportTicket(ticketId, trimmed, status);
   if (!ticket) return { ok: false, reason: "not-found" };
 
   revalidatePath("/admin/support");

@@ -16,6 +16,7 @@ export function BusinessOverviewPanel({
     address: string | null;
     plan: string;
     createdAt: Date;
+    trialEndsAt: Date | null;
   };
   categoryCount: number;
   itemCount: number;
@@ -54,6 +55,12 @@ export function BusinessOverviewPanel({
         <dd>{business.address ?? "—"}</dd>
         <dt className="text-muted-foreground">Signed up</dt>
         <dd>{formatAdminDate(business.createdAt)}</dd>
+        {business.trialEndsAt && (
+          <>
+            <dt className="text-muted-foreground">Trial reference end date</dt>
+            <dd>{formatAdminDate(business.trialEndsAt)}</dd>
+          </>
+        )}
       </dl>
     </div>
   );

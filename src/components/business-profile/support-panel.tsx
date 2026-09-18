@@ -70,7 +70,11 @@ export function SupportPanel({ tickets }: { tickets: SupportTicket[] }) {
     setIsSubmitting(false);
 
     if (!result.ok) {
-      setError("Please fill in both the subject and message.");
+      setError(
+        result.reason === "no-business"
+          ? "Couldn't find your business. Please try again."
+          : "Please fill in both the subject and message."
+      );
       return;
     }
 

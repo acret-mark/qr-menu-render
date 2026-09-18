@@ -55,13 +55,13 @@ export function BusinessLogoUploader({
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col items-center gap-2">
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
         className={cn(
-          "relative flex size-24 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted",
+          "relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted text-muted-foreground",
           uploading && "opacity-60"
         )}
         aria-label="Upload business logo"
@@ -69,8 +69,16 @@ export function BusinessLogoUploader({
         {logoUrl ? (
           <Image src={logoUrl} alt="" fill className="object-cover" />
         ) : (
-          <Camera className="size-6 text-muted-foreground" />
+          <Camera className="size-6" />
         )}
+      </button>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        className="text-xs font-medium text-primary disabled:opacity-50"
+      >
+        {uploading ? "Uploading…" : "Tap to change logo"}
       </button>
       <input
         ref={inputRef}
@@ -79,7 +87,6 @@ export function BusinessLogoUploader({
         onChange={handleFileChange}
         className="hidden"
       />
-      {uploading && <span className="text-xs text-muted-foreground">Uploading…</span>}
       {error && <span className="text-xs text-destructive">{error}</span>}
     </div>
   );

@@ -1,17 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   activateSubscriptionAction,
   rejectSubscriptionAction,
 } from "@/lib/admin/subscription-actions";
 import type { PlanType } from "@/lib/data-access/subscriptions";
+import { PLAN_PRICING } from "@/lib/subscriptions/pricing";
 import { PaymentProofThumb } from "@/components/admin/payment-proof-thumb";
 import { formatPaymentMethod, formatPeso } from "@/lib/admin/format";
 import { Button } from "@/components/ui/button";
 
-const ACTIVATABLE_PLANS: Exclude<PlanType, "trial">[] = ["standard", "pro"];
+// Price context in the label (₱/month, from the single source of truth in
+// PLAN_PRICING) rather than a plain plan name — matches qr-menu-dev's own
+// activate-subscription-form.tsx PLAN_OPTIONS.
+const PLAN_OPTIONS: { value: Exclude<PlanType, "trial">; label: string }[] = [
+  { value: "standard", label: `Standard — ${formatPeso(PLAN_PRICING.standard)}/month` },
+  { value: "pro", label: `Pro — ${formatPeso(PLAN_PRICING.pro)}/month` },
+];
 
 function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -41,11 +48,25 @@ export function ActivateSubscriptionForm({
   const router = useRouter();
   const [plan, setPlan] = useState<Exclude<PlanType, "trial">>(submittedPlan);
   const [startsAt, setStartsAt] = useState(() => toIsoDate(new Date()));
-  const expiresAt = useMemo(() => addOneMonth(startsAt), [startsAt]);
+  const [expiresAt, setExpiresAt] = useState(() => addOneMonth(toIsoDate(new Date())));
+  // Tracks whether the admin has deliberately overridden the computed
+  // billing-end date themselves, same "Billing ends" field as qr-menu-dev's
+  // activate-subscription-form.tsx — defaults to one month after the start
+  // date but stays editable.
+  const [expiresAtTouched, setExpiresAtTouched] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+
+  function handleStartsAtChange(value: string) {
+    setStartsAt(value);
+    // Keep the billing window at one month unless the admin has deliberately
+    // overridden the end date themselves.
+    if (!expiresAtTouched) {
+      setExpiresAt(addOneMonth(value));
+    }
+  }
 
   async function handleActivate() {
     if (submitting) return;
@@ -112,11 +133,11 @@ export function ActivateSubscriptionForm({
           id="activate-plan"
           value={plan}
           onChange={(e) => setPlan(e.target.value as Exclude<PlanType, "trial">)}
-          className="h-11 rounded-lg border border-border bg-background px-3.5 text-sm capitalize outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-11 rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          {ACTIVATABLE_PLANS.map((p) => (
-            <option key={p} value={p} className="capitalize">
-              {p}
+          {PLAN_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
           ))}
         </select>
@@ -130,10 +151,25 @@ export function ActivateSubscriptionForm({
           id="activate-starts-at"
           type="date"
           value={startsAt}
-          onChange={(e) => setStartsAt(e.target.value)}
+          onChange={(e) => handleStartsAtChange(e.target.value)}
           className="h-11 rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         />
-        <p className="text-xs text-muted-foreground">Expires {expiresAt} (one month later).</p>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="activate-expires-at" className="text-sm font-medium">
+          Billing ends
+        </label>
+        <input
+          id="activate-expires-at"
+          type="date"
+          value={expiresAt}
+          onChange={(e) => {
+            setExpiresAtTouched(true);
+            setExpiresAt(e.target.value);
+          }}
+          className="h-11 rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        />
       </div>
 
       {error && (

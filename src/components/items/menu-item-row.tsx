@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { Pencil, Star, ImageOff, TriangleAlert } from "lucide-react";
 import { setItemSoldOut } from "@/lib/items/actions";
+import { Switch } from "@/components/ui/switch";
 
 export type MenuItemRowItem = {
   id: string;
@@ -14,9 +15,10 @@ export type MenuItemRowItem = {
   hasStaleTranslation: boolean;
 };
 
+/** ₱299 for whole amounts, ₱299.5 only when there are actual centavos. */
 function formatPrice(price: string): string {
   const n = Number(price);
-  return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₱${n.toLocaleString("en-PH", { maximumFractionDigits: 2 })}`;
 }
 
 export function MenuItemRow({
@@ -89,16 +91,18 @@ export function MenuItemRow({
         </span>
       ) : (
         <>
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            Available
-            <input
-              type="checkbox"
+          <div className="flex shrink-0 flex-col items-center gap-1">
+            <span className="text-xs text-muted-foreground">Available</span>
+            <Switch
               checked={!isSoldOut}
-              onChange={(e) => handleToggle(e.target.checked)}
-              className="size-4"
-              aria-label={`${item.name} available`}
+              onCheckedChange={handleToggle}
+              ariaLabel={
+                isSoldOut
+                  ? `${item.name} — sold out, tap to mark available`
+                  : `${item.name} — available, tap to mark sold out`
+              }
             />
-          </label>
+          </div>
 
           <Link
             href={`/dashboard/menu/${item.id}/edit`}

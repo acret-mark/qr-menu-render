@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import { signIn, signOut, UnconfirmedEmailError } from "./auth.config";
 import { registerOwner, type RegisterOwnerInput } from "./register";
-import { getCurrentUser } from "./session";
 import { checkRateLimit } from "./rate-limit";
 import { requestEmailConfirmation } from "./email-confirmation";
 
@@ -115,11 +114,15 @@ const INVALID_ADMIN_CREDENTIALS_MESSAGE = "Invalid email or password.";
 
 /**
  * Separate from loginAction (T025 — /admin/login is its own route, per
- * qr-menu-dev's split admin/owner login). Uses `redirect: false` rather
- * than `redirectTo` because it needs to check `isAdmin` *before* deciding
- * where to send the caller: a non-admin account must never reach the admin
- * panel, even with a correct password (FR-006/US3) — it's rejected here and
- * signed back out, not just redirected elsewhere while still signed in.
+ * qr-menu-dev's split admin/owner login). Passes loginContext: "admin" so
+ * auth.config.ts's authorize() rejects non-admin accounts *before* a
+ * session/cookie is ever created (FR-006/US3) — a non-admin account must
+ * never reach the admin panel, even with a correct password. This must stay
+ * a signIn()-level rejection rather than a post-signIn `redirect: false` +
+ * getCurrentUser().isAdmin check + signOut(): that pattern re-reads auth()
+ * in the same server action that just called signIn(), which Auth.js v5
+ * doesn't guarantee reflects the session yet, and intermittently rejected
+ * correct admin credentials.
  */
 export async function adminLoginAction(
   email: string,
@@ -131,28 +134,18 @@ export async function adminLoginAction(
   }
 
   try {
-    await signIn("credentials", { email, password, redirect: false });
+    await signIn("credentials", { email, password, loginContext: "admin", redirectTo: "/admin" });
+    return { ok: true };
   } catch (err) {
     if (err instanceof AuthError) {
       return { ok: false, message: INVALID_ADMIN_CREDENTIALS_MESSAGE };
     }
     throw err;
   }
-
-  const user = await getCurrentUser();
-  if (!user?.isAdmin) {
-    await signOut({ redirect: false });
-    return { ok: false, message: INVALID_ADMIN_CREDENTIALS_MESSAGE };
-  }
-
-  redirect("/admin");
 }
 
 /**
- * Signs the current owner out and returns them to /login (specs/009 FR-011)
- * — the first UI-reachable use of Auth.js's signOut in this codebase;
- * adminLoginAction's own call above is an internal correction, not a
- * user-facing control.
+ * Signs the current owner out and returns them to /login (specs/009 FR-011).
  */
 export async function signOutAction(): Promise<void> {
   await signOut({ redirectTo: "/login" });

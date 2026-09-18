@@ -22,9 +22,10 @@ export function formatAdminDate(date: Date): string {
   });
 }
 
+/** ₱299 for whole amounts, ₱299.5 only when there are actual centavos. */
 export function formatPeso(amount: string): string {
   const n = Number(amount);
-  return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₱${n.toLocaleString("en-PH", { maximumFractionDigits: 2 })}`;
 }
 
 /**

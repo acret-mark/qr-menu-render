@@ -10,7 +10,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "rate-limited">("idle");
   const [message, setMessage] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -31,7 +31,7 @@ export function ForgotPasswordForm() {
     setStatus("sending");
     const result = await requestPasswordResetAction(trimmedEmail);
     setMessage(result.message);
-    setStatus("sent");
+    setStatus(!result.ok && result.rateLimited ? "rate-limited" : "sent");
   }
 
   if (status === "sent") {
@@ -58,6 +58,12 @@ export function ForgotPasswordForm() {
         />
         {fieldError && <span className="text-xs text-destructive">{fieldError}</span>}
       </div>
+
+      {status === "rate-limited" && message && (
+        <div className="rounded-lg bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
+          {message}
+        </div>
+      )}
 
       <Button type="submit" size="lg" disabled={status === "sending"} className="mt-2 h-11 w-full">
         {status === "sending" ? "Sending…" : "Send Reset Link"}

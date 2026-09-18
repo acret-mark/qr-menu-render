@@ -1,42 +1,65 @@
-// specs/034-performance-optimization-pass FR-010/research.md Decision 2 —
-// the one route-level skeleton this architecture needs (item detail/search
-// are in-page state changes with no fetch of their own to skeleton over,
-// per specs/008). A Server Component: zero client JS cost. Every box below
-// is sized to match its real counterpart exactly (MenuHeader's h-40 hero +
-// -mt-6 card overlap, MenuSearch's search-input row, CategoryTabs' pill row,
-// MenuItemCard's size-16 thumbnail + two text lines) so the real content
-// swaps in without a layout shift.
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Mirrors MenuHeader/MenuSearch's own structure (hero + rounded-overlap
+// panel, unbordered gap-6 item cards) so the loading state doesn't flash the
+// pre-rebrand layout for a moment before real content swaps in
+// (specs/026-menu-home-rebrand, ported here per the render visual-parity
+// pass). The business's plan isn't known yet at this point, so the hero's
+// language-selector placeholder always renders (a generic shape, not a
+// decision about final content) rather than being conditionally shown/hidden.
 export default function MenuLoading() {
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col animate-pulse">
-      <div className="flex flex-col">
-        <div className="h-40 bg-muted" />
-        <div className="-mt-6 rounded-t-[28px] bg-card px-4 pb-2 pt-6">
-          <div className="mx-auto h-6 w-40 rounded bg-muted" />
+    <div className="relative mx-auto w-full flex h-dvh max-w-[430px] flex-col overflow-hidden bg-background">
+      {/* Padding must match MenuHeader's hero exactly (px-4 pt-6 pb-14) —
+          any difference here changes the hero's height, which visibly
+          shifts everything below it (identity panel, search, tabs, list)
+          the instant real content replaces this skeleton. Same for every
+          other padding/margin value below: each is copied from the real
+          component it stands in for, not approximated, since this swap
+          happens after paint (unlike a pre-hydration flash) and a mismatch
+          reads as the page's layout being briefly "wrong" before snapping
+          into place. */}
+      <div className="relative shrink-0 bg-primary px-4 pt-6 pb-14">
+        {/* Absolutely positioned, matching LanguageSelector's own
+            `absolute right-3 top-3` — NOT a flex-justified flow element.
+            The business's plan isn't known yet at this point, so this
+            placeholder always renders (a generic shape, not a decision
+            about final content) rather than being conditionally shown. */}
+        <div className="absolute right-3 top-3 z-10">
+          <Skeleton className="h-[26px] w-14 rounded-full bg-white/40" />
         </div>
       </div>
 
-      <div className="shrink-0 px-4 py-3">
-        <div className="h-10 w-full rounded-full bg-muted" />
+      <div className="relative -mt-6 shrink-0 rounded-t-[28px] bg-card px-4 pt-8">
+        <Skeleton className="mx-auto h-7 w-40" />
+        <Skeleton className="mx-auto mt-1 h-3 w-28" />
       </div>
 
-      <div className="flex shrink-0 gap-2 overflow-hidden border-b border-border px-4 py-3">
-        <div className="h-8 w-20 shrink-0 rounded-full bg-muted" />
-        <div className="h-8 w-24 shrink-0 rounded-full bg-muted" />
-        <div className="h-8 w-16 shrink-0 rounded-full bg-muted" />
+      <div className="shrink-0 bg-card px-4">
+        <Skeleton className="mt-6 h-12 rounded-full" />
       </div>
 
-      <div className="flex flex-col px-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="flex w-full gap-3 py-3">
-            <div className="size-16 shrink-0 rounded-lg bg-muted" />
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
-              <div className="h-4 w-2/3 rounded bg-muted" />
-              <div className="h-3 w-full rounded bg-muted" />
-              <div className="h-4 w-16 rounded bg-muted" />
-            </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <nav className="mt-2 border-b border-border px-4 py-3.5">
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-20 shrink-0 rounded-full" />
+            <Skeleton className="h-9 w-24 shrink-0 rounded-full" />
+            <Skeleton className="h-9 w-16 shrink-0 rounded-full" />
           </div>
-        ))}
+        </nav>
+
+        <ul className="flex flex-col gap-6 px-4 pb-6 pt-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <li key={index} className="flex gap-4">
+              <Skeleton className="h-32 w-32 shrink-0 rounded-2xl" />
+              <div className="flex flex-1 flex-col gap-2 pt-2">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="mt-2 h-5 w-16" />
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

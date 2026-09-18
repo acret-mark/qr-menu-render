@@ -48,8 +48,19 @@ export function MenuSearch({
   const expandedEntry = findExpandedEntry();
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
-      <div className="shrink-0 px-4 py-3">
+    // No `relative` here (unlike an earlier version of this file) — the
+    // ItemDetailSheet rendered below is `position: absolute`, and leaving
+    // this un-positioned lets it fall through to page.tsx's own `relative`
+    // shell instead, so its dimmed backdrop covers the header/hero above
+    // too, matching qr-menu-dev's menu-home.tsx behavior.
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* bg-card + no vertical gap from MenuHeader's identity card above —
+          together they read as one continuous rounded panel even though
+          the search pill's interactive state stays owned by this
+          component's own useMenuUrlState call, not MenuHeader's (matches
+          qr-menu-dev's single-panel look without merging the two
+          components' state). */}
+      <div className="shrink-0 bg-card px-4">
         <SearchInput value={query} onChange={setQuery} />
       </div>
       {trimmedQuery ? (

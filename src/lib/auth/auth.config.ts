@@ -65,6 +65,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
         confirmationToken: { label: "Confirmation Token", type: "text" },
+        loginContext: { label: "Login Context", type: "text" },
       },
       authorize: async (credentials) => {
         const email = credentials?.email;
@@ -116,6 +117,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const passwordHash = user?.passwordHash ?? null;
         const valid = await verifyPassword(password, passwordHash);
         if (!user || !valid) return null;
+
+        // adminLoginAction passes loginContext: "admin" (T025). Rejected
+        // here, before any session/cookie is created, rather than by
+        // checking session.user.isAdmin after signIn() and signing back out
+        // — that same-request re-read of auth() right after signIn() is
+        // unreliable in Auth.js v5 (session not guaranteed visible until a
+        // later request), which let a correct non-admin password
+        // intermittently pass and correct admin credentials intermittently
+        // read back as "not admin yet".
+        if (credentials?.loginContext === "admin" && !user.isAdmin) return null;
 
         // specs/011-email-confirmation: a correct password alone is no
         // longer sufficient once an account requires confirmation — this

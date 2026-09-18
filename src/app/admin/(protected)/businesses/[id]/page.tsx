@@ -11,6 +11,7 @@ import { BusinessOverviewPanel } from "@/components/admin/business-overview-pane
 import { BusinessMenuPanel } from "@/components/admin/business-menu-panel";
 import { SubscriptionHistoryTable } from "@/components/admin/subscription-history-table";
 import { StatusPlanForm } from "@/components/admin/status-plan-form";
+import { isWithinGrace } from "@/lib/subscriptions/expiry";
 
 // specs/018-business-detail / specs/019-admin-status-plan-override. Session/
 // isAdmin gate lives in admin/(protected)/layout.tsx (specs/012) — this
@@ -44,10 +45,35 @@ export default async function BusinessDetailPage({
     (t) => t.status === "open" || t.status === "in_progress"
   );
 
+  // "Expired" badge condition mirrors adminGetExpiredBusinessCount's
+  // per-business rule (src/lib/data-access/subscriptions.ts): the most
+  // recently created ever-activated subscription (expiresAt set) is not
+  // status === "active" within grace. `subscriptions` here is already
+  // ordered newest-first (adminGetAllSubscriptionsForBusiness), so the
+  // first entry with a non-null expiresAt is that same "most recent
+  // activated" row.
+  const mostRecentActivatedSubscription = subscriptions.find((s) => s.expiresAt !== null);
+  const isExpired = mostRecentActivatedSubscription
+    ? !(
+        mostRecentActivatedSubscription.status === "active" &&
+        isWithinGrace(mostRecentActivatedSubscription.expiresAt as Date)
+      )
+    : false;
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{business.name}</h1>
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold">{business.name}</h1>
+            {isExpired && (
+              <span className="inline-flex items-center rounded-full bg-destructive/15 px-2.5 py-0.5 text-xs font-medium text-destructive">
+                Expired
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">{business.slug}</p>
+        </div>
 
         <div className="flex items-center gap-3">
           <StatusPlanForm
