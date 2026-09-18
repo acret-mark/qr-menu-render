@@ -27,8 +27,8 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
       // is blocked while locked, including a direct navigation to this URL
       // (the underlying saveItem action rejects it server-side either way).
       return (
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-          <h1 className="text-2xl font-semibold">Edit item</h1>
+        <div className="flex flex-col gap-4">
+          <h1 className="font-heading text-xl font-semibold">Edit item</h1>
           <p className="text-sm text-muted-foreground">
             Your subscription has expired. Renew from the{" "}
             <Link href="/business-profile#subscription" className="text-accent underline">
@@ -50,8 +50,8 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
 
   if (!item) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-        <h1 className="text-2xl font-semibold">Edit item</h1>
+      <div className="flex flex-col gap-4">
+        <h1 className="font-heading text-xl font-semibold">Edit item</h1>
         <p className="text-sm text-destructive">That item couldn&apos;t be found.</p>
       </div>
     );
@@ -64,8 +64,8 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
     .filter((i): i is (typeof allIngredients)[number] => !!i);
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-      <h1 className="text-2xl font-semibold">Edit item</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="font-heading text-xl font-semibold">Edit item</h1>
       <ItemForm
         categories={categories}
         item={item}

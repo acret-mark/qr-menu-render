@@ -44,8 +44,8 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="font-heading text-xl font-semibold">Dashboard</h1>
 
       {business && (
         <p className="text-base">
@@ -56,33 +56,37 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 gap-4">
         <Link
           href="/categories"
-          className="rounded-lg border border-border p-4 hover:bg-muted"
+          className="rounded-lg border border-border bg-card p-4 text-center"
         >
-          <p className="text-3xl font-semibold tabular-nums">{categories.length}</p>
-          <p className="text-sm text-muted-foreground">Categories</p>
+          <div className="font-heading text-2xl font-semibold">{categories.length}</div>
+          <div className="text-sm text-muted-foreground">Categories</div>
         </Link>
         <Link
           href="/dashboard/menu"
-          className="rounded-lg border border-border p-4 hover:bg-muted"
+          className="rounded-lg border border-border bg-card p-4 text-center"
         >
-          <p className="text-3xl font-semibold tabular-nums">{items.length}</p>
-          <p className="text-sm text-muted-foreground">Items</p>
+          <div className="font-heading text-2xl font-semibold">{items.length}</div>
+          <div className="text-sm text-muted-foreground">Menu Items</div>
         </Link>
       </div>
 
       {business && (
         <Link
           href="/business-profile#subscription"
-          className="rounded-lg border border-border p-4 hover:bg-muted"
+          className="rounded-lg border border-border bg-card p-4 text-sm"
         >
-          <p className="font-medium">{business.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {business.plan} plan · {business.status}
-          </p>
+          <span className="text-muted-foreground">Plan:</span>{" "}
+          <span className="font-medium capitalize">{business.plan}</span>
+          <span className="mx-2 text-muted-foreground">·</span>
+          <span className="text-muted-foreground">Status:</span>{" "}
+          <span className="font-medium capitalize">{business.status}</span>
         </Link>
       )}
 
-      <Link href="/qr" className="rounded-lg border border-border p-4 hover:bg-muted">
+      <Link
+        href="/qr"
+        className="flex h-11 items-center justify-center rounded-lg border border-border bg-card text-sm font-medium"
+      >
         Download QR
       </Link>
     </div>

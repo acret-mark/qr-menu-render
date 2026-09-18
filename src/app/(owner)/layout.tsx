@@ -79,11 +79,13 @@ export default async function OwnerLayout({
   const locked = !(await getSubscriptionAccess(business.id)).full;
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <OwnerHeader businessName={business.name} />
-      {business.status === "pending" && <StatusBanner status="pending" />}
-      {business.status !== "pending" && locked && <SubscriptionLockedBanner />}
-      <main className="flex-1 pb-20">{children}</main>
+    <div className="min-h-dvh bg-background px-4 pt-6 pb-24 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-3xl flex-col gap-4">
+        <OwnerHeader businessName={business.name} />
+        {business.status === "pending" && <StatusBanner status="pending" />}
+        {business.status !== "pending" && locked && <SubscriptionLockedBanner />}
+        {children}
+      </div>
       <OwnerTabBar />
     </div>
   );

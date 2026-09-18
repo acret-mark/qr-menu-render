@@ -16,16 +16,16 @@ export default async function QrPage() {
   const business = await getOwnBusiness(user.id);
   if (!business) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-        <h1 className="text-2xl font-semibold">QR Code</h1>
+      <div className="flex flex-col gap-4">
+        <h1 className="font-heading text-xl font-semibold">QR Code</h1>
         <p className="text-sm text-destructive">No business found for this account.</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-      <h1 className="text-2xl font-semibold">QR Code</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="font-heading text-xl font-semibold">QR Code</h1>
       <QrCodeView name={business.name} slug={business.slug} />
     </div>
   );

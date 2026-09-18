@@ -61,7 +61,7 @@ export function MenuHeader({
           />
         )}
         {languageSelector && (
-          <div className="absolute right-3 top-3 z-10">{languageSelector}</div>
+          <div className="relative z-10 flex justify-end">{languageSelector}</div>
         )}
       </div>
 
@@ -73,7 +73,7 @@ export function MenuHeader({
           background silently paints over this panel's rounded top corners in
           their overlap zone, hiding the rounding entirely. */}
       <div className="relative -mt-6 shrink-0 rounded-t-[28px] bg-card px-4 pt-8">
-        <h1 className="text-center text-[1.4rem] leading-tight">{name}</h1>
+        <h1 className="text-center font-heading text-[1.4rem] leading-tight">{name}</h1>
         {address && (
           <p className="mt-1 flex items-center justify-center gap-1 text-center text-[0.82rem] leading-tight text-muted-foreground">
             <MapPin size={13} className="shrink-0" />

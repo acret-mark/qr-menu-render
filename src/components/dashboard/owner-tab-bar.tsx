@@ -36,9 +36,9 @@ export function OwnerTabBar() {
   return (
     <nav
       aria-label="Owner navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background"
+      className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card"
     >
-      <ul className="mx-auto flex max-w-2xl">
+      <ul className="mx-auto flex max-w-3xl items-stretch justify-around">
         {SECTIONS.map(({ section, label, href, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
@@ -47,7 +47,7 @@ export function OwnerTabBar() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center gap-1 py-2.5 text-xs",
+                  "flex flex-col items-center gap-1 px-2 py-2.5 text-xs",
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >

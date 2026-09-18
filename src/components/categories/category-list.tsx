@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Pencil, Trash2, TriangleAlert } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { CategoryForm } from "@/components/categories/category-form";
 import { DeleteCategoryDialog } from "@/components/categories/delete-category-dialog";
 import { ReorderControls } from "@/components/categories/reorder-controls";
@@ -26,7 +25,7 @@ export function CategoryList({
 
   if (categories.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="px-4 py-8 text-center text-base text-muted-foreground">
         {locked
           ? "No categories yet."
           : "No categories yet. Use the + button to add your first one."}
@@ -36,12 +35,9 @@ export function CategoryList({
 
   return (
     <>
-      <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
+      <ul className="divide-y divide-border">
         {categories.map((category, index) => (
-          <li
-            key={category.id}
-            className="flex items-center gap-3 px-4 py-3"
-          >
+          <li key={category.id} className="flex items-center justify-between gap-3 px-4 py-3">
             {/* specs/020-unified-subscription-lifecycle FR-012: reorder is
                 a menu-editing action too — hidden, not just disabled, when
                 locked (the server-side reorderCategory already rejects it
@@ -54,40 +50,38 @@ export function CategoryList({
               />
             )}
 
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate font-medium">{category.name}</span>
-              <span className="text-xs text-muted-foreground">
+            <div className="flex-1">
+              <p className="text-base font-medium">{category.name}</p>
+              <p className="text-sm text-muted-foreground">
                 {category.itemCount} item{category.itemCount === 1 ? "" : "s"}
-              </span>
+              </p>
               {category.hasStaleTranslation && (
-                <span className="mt-1 inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                  <TriangleAlert className="size-3.5" />
+                <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                  <TriangleAlert size={12} />
                   Translation pending
-                </span>
+                </p>
               )}
             </div>
 
             {!locked && (
-              <>
-                <Button
+              <div className="flex items-center gap-1">
+                <button
                   type="button"
-                  variant="ghost"
-                  size="icon-sm"
                   aria-label={`Edit ${category.name}`}
                   onClick={() => setEditing(category)}
+                  className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
-                  <Pencil />
-                </Button>
-                <Button
+                  <Pencil size={18} />
+                </button>
+                <button
                   type="button"
-                  variant="ghost"
-                  size="icon-sm"
                   aria-label={`Delete ${category.name}`}
                   onClick={() => setDeleting(category)}
+                  className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive"
                 >
-                  <Trash2 />
-                </Button>
-              </>
+                  <Trash2 size={18} />
+                </button>
+              </div>
             )}
           </li>
         ))}

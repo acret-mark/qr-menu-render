@@ -22,8 +22,8 @@ export default async function CategoriesPage() {
   const business = await getOwnBusiness(user.id);
   if (!business) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-        <h1 className="text-2xl font-semibold">Categories</h1>
+      <div className="flex flex-col gap-4">
+        <h1 className="font-heading text-xl font-semibold">Categories</h1>
         <p className="text-sm text-destructive">No business found for this account.</p>
       </div>
     );
@@ -57,8 +57,8 @@ export default async function CategoriesPage() {
   });
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-      <h1 className="text-2xl font-semibold">Categories</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="font-heading text-xl font-semibold">Categories</h1>
       <CategoryList categories={listItems} locked={locked} />
       {!locked && <AddCategoryFab />}
     </div>

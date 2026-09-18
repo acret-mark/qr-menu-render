@@ -21,7 +21,11 @@ export function CategoryTabs({
   onOpenItem: (itemId: string) => void;
 }) {
   if (categories.length === 0) {
-    return <p className="px-4 py-6 text-sm text-muted-foreground">No menu items yet.</p>;
+    return (
+      <p className="flex flex-1 items-center justify-center px-6 text-center text-sm text-muted-foreground">
+        No menu items yet.
+      </p>
+    );
   }
 
   return (

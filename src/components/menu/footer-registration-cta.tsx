@@ -7,10 +7,10 @@ import Link from "next/link";
 // card above it (FR-007) — it simply appears after them.
 export function FooterRegistrationCta() {
   return (
-    <footer className="shrink-0 bg-primary px-4 py-2.5 text-center text-xs text-primary-foreground">
-      <Link href="/register">
+    <footer className="shrink-0 bg-primary px-4 py-2.5 text-center text-[0.76rem] text-primary-foreground">
+      <Link href="/register" className="no-underline">
         Want this smart digital menu for your food business?{" "}
-        <strong className="font-semibold">Grab yours now.</strong>
+        <strong className="font-heading">Grab yours now.</strong>
       </Link>
     </footer>
   );

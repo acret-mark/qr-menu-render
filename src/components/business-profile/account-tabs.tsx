@@ -66,7 +66,7 @@ export function AccountTabs({
         <Link href="/dashboard" aria-label="Back to dashboard" className="text-muted-foreground">
           ←
         </Link>
-        <h1 className="text-xl font-semibold">{activeTitle}</h1>
+        <h1 className="font-heading text-xl font-semibold">{activeTitle}</h1>
       </div>
 
       <nav className="flex border-b border-border px-4">
@@ -100,10 +100,10 @@ export function AccountTabs({
       <div className="p-6" hidden={activeTab !== "profile"}>
         {profilePanel}
       </div>
-      <div className="p-6" hidden={activeTab !== "subscription"}>
+      <div className="py-6" hidden={activeTab !== "subscription"}>
         {subscriptionPanel}
       </div>
-      <div className="p-6" hidden={activeTab !== "support"}>
+      <div className="py-6" hidden={activeTab !== "support"}>
         {supportPanel}
       </div>
     </div>

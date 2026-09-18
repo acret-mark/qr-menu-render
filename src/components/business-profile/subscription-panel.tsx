@@ -96,9 +96,9 @@ export function SubscriptionPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-lg border border-border bg-muted p-5">
+      <div className="mx-4 rounded-lg border border-border bg-muted p-5">
         <div className="flex items-baseline justify-between">
-          <span className="text-lg font-semibold">
+          <span className="font-heading text-lg font-semibold">
             {currentPlan === "pro" ? PLAN_LABELS.pro : PLAN_LABELS.standard}
           </span>
           <span className="text-sm font-medium">{statusLabel}</span>
@@ -126,7 +126,7 @@ export function SubscriptionPanel({
         )}
       </div>
 
-      <div className="rounded-lg border border-border p-4 text-sm">
+      <div className="mx-4 rounded-lg border border-border p-4 text-sm">
         <p className="font-medium">Manual payment instructions</p>
         <p className="mt-2 text-muted-foreground">
           GCash: 0917-123-4567 (Hapag Inc.)
@@ -138,7 +138,7 @@ export function SubscriptionPanel({
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3 px-4">
         {targetPlan === "pro" ? (
           <div className="flex items-center justify-between rounded-lg bg-primary/10 px-3.5 py-2.5 text-sm">
             <span className="font-medium text-primary">

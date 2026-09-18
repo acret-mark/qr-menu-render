@@ -126,6 +126,7 @@ export default async function PublicMenuPage({
     // region is what scrolls, everything else here stays fixed in place.
     <div className="relative mx-auto flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-background">
       <OfflineIndicator />
+      {translationUnavailable && <TranslationUnavailableBanner />}
       <MenuHeader
         name={business.name}
         address={business.address}
@@ -134,7 +135,6 @@ export default async function PublicMenuPage({
           isPro ? <LanguageSelector currentLanguage={selectedLanguage} /> : undefined
         }
       />
-      {translationUnavailable && <TranslationUnavailableBanner />}
       <MenuSearch
         categories={displayCategories}
         initialCategoryIndex={initialCategoryIndex}

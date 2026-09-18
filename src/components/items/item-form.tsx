@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveItem } from "@/lib/items/actions";
 import { syncItemIngredientsAction } from "@/lib/ingredients/actions";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ItemPhotoUploader } from "@/components/items/item-photo-uploader";
 import { DeleteItemDialog } from "@/components/items/delete-item-dialog";
@@ -130,12 +131,14 @@ export function ItemForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex w-full flex-col gap-4">
-      <ItemPhotoUploader
-        photoUrl={photoUrl}
-        onPhotoChange={setPhotoUrl}
-        onUploadingChange={setIsPhotoUploading}
-      />
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 px-4">
+      <div className="flex justify-center">
+        <ItemPhotoUploader
+          photoUrl={photoUrl}
+          onPhotoChange={setPhotoUrl}
+          onUploadingChange={setIsPhotoUploading}
+        />
+      </div>
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="item-name" className="text-sm font-medium">
@@ -211,21 +214,21 @@ export function ItemForm({
         onSelectedChange={setIngredients}
       />
 
-      <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
-        <div className="flex items-center justify-between gap-4 text-sm font-medium">
-          Best Seller
+      <div className="mt-2 flex flex-col divide-y divide-border rounded-lg border border-border">
+        <div className="flex items-center justify-between px-3.5 py-3">
+          <span className="text-sm font-medium">Best Seller</span>
           <Switch checked={isBestSeller} onCheckedChange={setIsBestSeller} ariaLabel="Best Seller" />
         </div>
-        <div className="flex items-center justify-between gap-4 text-sm font-medium">
-          Available
+        <div className="flex items-center justify-between px-3.5 py-3">
+          <span className="text-sm font-medium">Available</span>
           <Switch
             checked={!isSoldOut}
             onCheckedChange={(checked) => setIsSoldOut(!checked)}
             ariaLabel="Available"
           />
         </div>
-        <div className="flex items-center justify-between gap-4 text-sm font-medium">
-          Show on Menu
+        <div className="flex items-center justify-between px-3.5 py-3">
+          <span className="text-sm font-medium">Show on Menu</span>
           <Switch checked={isDisplayed} onCheckedChange={setIsDisplayed} ariaLabel="Show on Menu" />
         </div>
       </div>
@@ -236,22 +239,20 @@ export function ItemForm({
         </div>
       )}
 
-      <div className="flex gap-2">
-        <Button type="submit" size="lg" disabled={!canSubmit} className="h-11 flex-1">
-          {submitting ? "Saving…" : "Save Item"}
-        </Button>
-        {isEdit && (
-          <Button
-            type="button"
-            variant="destructive"
-            size="lg"
-            className="h-11"
-            onClick={() => setDeleteOpen(true)}
-          >
-            Delete
-          </Button>
-        )}
-      </div>
+      <Button type="submit" disabled={!canSubmit} className="mt-2 h-11 w-full">
+        {submitting ? "Saving…" : "Save Item"}
+      </Button>
+
+      {isEdit && (
+        <button
+          type="button"
+          onClick={() => setDeleteOpen(true)}
+          className="mb-4 flex items-center justify-center gap-1.5 text-sm font-medium text-destructive"
+        >
+          <Trash2 size={16} />
+          Delete Item
+        </button>
+      )}
 
       {isEdit && (
         <DeleteItemDialog

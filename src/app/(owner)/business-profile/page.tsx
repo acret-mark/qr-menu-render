@@ -23,8 +23,8 @@ export default async function BusinessProfilePage() {
   const business = await getOwnBusiness(user.id);
   if (!business) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-        <h1 className="text-2xl font-semibold">Business Profile</h1>
+      <div className="flex flex-col gap-4">
+        <h1 className="font-heading text-xl font-semibold">Business Profile</h1>
         <p className="text-sm text-destructive">No business found for this account.</p>
       </div>
     );
@@ -36,42 +36,40 @@ export default async function BusinessProfilePage() {
   ]);
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-      <AccountTabs
-        profilePanel={
-          <BusinessProfileForm
-            business={{
-              name: business.name,
-              logoUrl: business.logoUrl,
-              contactPhone: business.contactPhone,
-              contactEmail: business.contactEmail,
-              address: business.address,
-            }}
-          />
-        }
-        subscriptionPanel={
-          <SubscriptionPanel
-            // A "trial" plan is only ever admin-granted directly as active
-            // (adminGrantTrialSubscription) — this owner-facing submission
-            // flow never targets it, so it's treated the same as its
-            // nearest paid tier for pricing-display purposes here. Trial
-            // status itself (for the "Trial" label / "Trial ends" date row)
-            // is passed separately below via `isTrial`, matching
-            // qr-menu-dev's own businesses.plan/status split.
-            currentPlan={business.plan === "trial" ? "standard" : business.plan}
-            isTrial={business.status === "trial"}
-            latest={
-              latest && {
-                plan: latest.plan,
-                status: latest.status,
-                paymentMethod: latest.paymentMethod,
-                expiresAt: latest.expiresAt,
-              }
+    <AccountTabs
+      profilePanel={
+        <BusinessProfileForm
+          business={{
+            name: business.name,
+            logoUrl: business.logoUrl,
+            contactPhone: business.contactPhone,
+            contactEmail: business.contactEmail,
+            address: business.address,
+          }}
+        />
+      }
+      subscriptionPanel={
+        <SubscriptionPanel
+          // A "trial" plan is only ever admin-granted directly as active
+          // (adminGrantTrialSubscription) — this owner-facing submission
+          // flow never targets it, so it's treated the same as its
+          // nearest paid tier for pricing-display purposes here. Trial
+          // status itself (for the "Trial" label / "Trial ends" date row)
+          // is passed separately below via `isTrial`, matching
+          // qr-menu-dev's own businesses.plan/status split.
+          currentPlan={business.plan === "trial" ? "standard" : business.plan}
+          isTrial={business.status === "trial"}
+          latest={
+            latest && {
+              plan: latest.plan,
+              status: latest.status,
+              paymentMethod: latest.paymentMethod,
+              expiresAt: latest.expiresAt,
             }
-          />
-        }
-        supportPanel={<SupportPanel tickets={tickets} />}
-      />
-    </div>
+          }
+        />
+      }
+      supportPanel={<SupportPanel tickets={tickets} />}
+    />
   );
 }

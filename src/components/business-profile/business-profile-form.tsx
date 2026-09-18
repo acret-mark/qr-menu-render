@@ -83,102 +83,104 @@ export function BusinessProfileForm({ business }: { business: BusinessProfileFor
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex w-full flex-col gap-4">
+    <form onSubmit={handleSubmit} noValidate className="flex w-full flex-col gap-6">
       <BusinessLogoUploader
         logoUrl={logoUrl}
         onLogoChange={setLogoUrl}
         onUploadingChange={setIsLogoUploading}
       />
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="business-name" className="text-sm font-medium">
-          Business name
-        </label>
-        <input
-          id="business-name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className={cn(
-            "h-11 rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-            fieldErrors.name && "border-destructive"
-          )}
-          aria-invalid={!!fieldErrors.name}
-        />
-        {/* Persistent slug-safety note (spec FR-007) — always visible, not
-            conditioned on whether the name has been edited. */}
-        <p className="text-xs text-muted-foreground">
-          Changing your business name will not change your menu link.
-        </p>
-        {fieldErrors.name && <span className="text-xs text-destructive">{fieldErrors.name}</span>}
-      </div>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="business-name" className="text-sm font-medium">
+            Business name
+          </label>
+          <input
+            id="business-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={cn(
+              "h-11 rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              fieldErrors.name && "border-destructive"
+            )}
+            aria-invalid={!!fieldErrors.name}
+          />
+          {/* Persistent slug-safety note (spec FR-007) — always visible, not
+              conditioned on whether the name has been edited. */}
+          <p className="text-xs text-muted-foreground">
+            Changing your business name will not change your menu link.
+          </p>
+          {fieldErrors.name && <span className="text-xs text-destructive">{fieldErrors.name}</span>}
+        </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="business-phone" className="text-sm font-medium">
-          Contact phone
-        </label>
-        <input
-          id="business-phone"
-          type="tel"
-          value={contactPhone}
-          onChange={(e) => setContactPhone(e.target.value)}
-          placeholder="Optional"
-          className="h-11 rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        />
-      </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="business-phone" className="text-sm font-medium">
+            Contact phone
+          </label>
+          <input
+            id="business-phone"
+            type="tel"
+            value={contactPhone}
+            onChange={(e) => setContactPhone(e.target.value)}
+            placeholder="Optional"
+            className="h-11 rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          />
+        </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="business-email" className="text-sm font-medium">
-          Contact email <span className="font-normal text-destructive">*</span>
-        </label>
-        <input
-          id="business-email"
-          type="email"
-          value={contactEmail}
-          onChange={(e) => setContactEmail(e.target.value)}
-          className={cn(
-            "h-11 rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-            fieldErrors.contactEmail && "border-destructive"
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="business-email" className="text-sm font-medium">
+            Contact email <span className="font-normal text-destructive">*</span>
+          </label>
+          <input
+            id="business-email"
+            type="email"
+            value={contactEmail}
+            onChange={(e) => setContactEmail(e.target.value)}
+            className={cn(
+              "h-11 rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              fieldErrors.contactEmail && "border-destructive"
+            )}
+            aria-invalid={!!fieldErrors.contactEmail}
+            aria-required="true"
+          />
+          <p className="text-xs text-muted-foreground">
+            We&apos;ll send your activation confirmation to this address.
+          </p>
+          {fieldErrors.contactEmail && (
+            <span className="text-xs text-destructive">{fieldErrors.contactEmail}</span>
           )}
-          aria-invalid={!!fieldErrors.contactEmail}
-          aria-required="true"
-        />
-        <p className="text-xs text-muted-foreground">
-          We&apos;ll send your activation confirmation to this address.
-        </p>
-        {fieldErrors.contactEmail && (
-          <span className="text-xs text-destructive">{fieldErrors.contactEmail}</span>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="business-address" className="text-sm font-medium">
+            Address
+          </label>
+          <textarea
+            id="business-address"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            rows={2}
+            placeholder="Optional"
+            className="rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          />
+        </div>
+
+        {error && (
+          <div className="rounded-lg bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
+            {error}
+          </div>
         )}
+        {saved && !error && (
+          <div className="rounded-lg bg-success/10 px-3.5 py-2.5 text-sm text-success">
+            Business information saved.
+          </div>
+        )}
+
+        <Button type="submit" size="lg" disabled={!canSubmit} className="h-11">
+          {submitting ? "Saving…" : "Save"}
+        </Button>
       </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="business-address" className="text-sm font-medium">
-          Address
-        </label>
-        <textarea
-          id="business-address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          rows={2}
-          placeholder="Optional"
-          className="rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        />
-      </div>
-
-      {error && (
-        <div className="rounded-lg bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-      {saved && !error && (
-        <div className="rounded-lg bg-success/10 px-3.5 py-2.5 text-sm text-success">
-          Business information saved.
-        </div>
-      )}
-
-      <Button type="submit" size="lg" disabled={!canSubmit} className="h-11">
-        {submitting ? "Saving…" : "Save"}
-      </Button>
     </form>
   );
 }
