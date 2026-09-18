@@ -29,17 +29,17 @@ export function CategoryTabs({
       {/* Non-scrolling sibling above the scrollable item region — never
           moves out of view without relying on CSS position:sticky (matches
           qr-menu-dev's own layout choice, research.md/tasks.md T009). */}
-      <nav className="flex shrink-0 gap-2 overflow-x-auto border-b border-border px-4 py-3">
+      <nav className="mt-2 flex shrink-0 gap-2 overflow-x-auto border-b border-border bg-background px-4 py-3.5">
         {categories.map((category) => (
           <button
             key={category.id}
             type="button"
             onClick={() => onSelectCategory(category.id)}
             className={cn(
-              "shrink-0 rounded-full border px-3.5 py-1.5 text-sm whitespace-nowrap",
+              "shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-[0.88rem] font-medium",
               category.id === activeCategoryId
                 ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-background text-foreground hover:bg-muted"
+                : "border-primary bg-card text-primary"
             )}
           >
             {category.name}
@@ -52,7 +52,7 @@ export function CategoryTabs({
           <ul
             key={category.id}
             className={cn(
-              "flex flex-col divide-y divide-border",
+              "flex flex-col gap-6 pb-6 pt-4",
               category.id !== activeCategoryId && "hidden"
             )}
           >

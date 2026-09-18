@@ -1,4 +1,5 @@
 import { formatPeso } from "@/lib/admin/format";
+import { MenuItemStatusBadge, type MenuItemVisibility } from "@/components/admin/menu-item-status-badge";
 
 // specs/018-business-detail FR-002/FR-003/FR-009. Read-only — no add/
 // edit/delete/reorder control anywhere. Shows every item as stored
@@ -38,8 +39,16 @@ export function BusinessMenuPanel({
             <td className="px-5 py-3.5">{item.name}</td>
             <td className="px-5 py-3.5">{categoryNameById.get(item.categoryId) ?? "—"}</td>
             <td className="px-5 py-3.5">{formatPeso(item.price)}</td>
-            <td className="px-5 py-3.5 text-muted-foreground">
-              {item.isSoldOut ? "Sold out" : !item.isDisplayed ? "Hidden" : "Visible"}
+            <td className="px-5 py-3.5">
+              <MenuItemStatusBadge
+                status={
+                  (item.isSoldOut
+                    ? "sold_out"
+                    : !item.isDisplayed
+                      ? "hidden"
+                      : "visible") satisfies MenuItemVisibility
+                }
+              />
             </td>
           </tr>
         ))}

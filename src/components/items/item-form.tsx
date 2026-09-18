@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveItem } from "@/lib/items/actions";
 import { syncItemIngredientsAction } from "@/lib/ingredients/actions";
@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button";
 import { ItemPhotoUploader } from "@/components/items/item-photo-uploader";
 import { DeleteItemDialog } from "@/components/items/delete-item-dialog";
 import { IngredientTagInput, type IngredientOption } from "@/components/items/ingredient-tag-input";
+import {
+  ItemDescriptionField,
+  type ItemDescriptionFieldHandle,
+} from "@/components/items/item-description-field";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 type Category = { id: string; name: string };
@@ -21,6 +26,8 @@ type ItemFormItem = {
   isDisplayed: boolean;
   isSoldOut: boolean;
   isBestSeller: boolean;
+  descriptionSource?: "ai_generated" | "manual" | null;
+  aiKeywords?: string[] | null;
 };
 
 function isPriceValid(value: string): boolean {
@@ -42,11 +49,13 @@ export function ItemForm({
 }) {
   const router = useRouter();
   const isEdit = !!item;
+  const descriptionFieldRef = useRef<ItemDescriptionFieldHandle>(null);
 
   const [name, setName] = useState(item?.name ?? "");
   const [categoryId, setCategoryId] = useState(item?.categoryId ?? categories[0]?.id ?? "");
   const [price, setPrice] = useState(item?.price ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
+  const [acceptedAiDraft, setAcceptedAiDraft] = useState<{ keywords: string[] } | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(item?.photoUrl ?? null);
   const [isDisplayed, setIsDisplayed] = useState(item?.isDisplayed ?? true);
   const [isSoldOut, setIsSoldOut] = useState(item?.isSoldOut ?? false);
@@ -61,6 +70,15 @@ export function ItemForm({
 
   const canSubmit =
     name.trim() !== "" && categoryId !== "" && isPriceValid(price) && !isPhotoUploading && !submitting;
+
+  function handleDescriptionChange(next: string) {
+    setDescription(next);
+    setAcceptedAiDraft(null);
+  }
+
+  function handleAcceptedDraft(keywords: string[]) {
+    setAcceptedAiDraft({ keywords });
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -79,6 +97,7 @@ export function ItemForm({
       isDisplayed,
       isSoldOut,
       isBestSeller,
+      acceptedAiDraft: acceptedAiDraft ?? undefined,
     });
 
     setSubmitting(false);
@@ -91,10 +110,10 @@ export function ItemForm({
         "invalid-category": "That category is no longer available — pick another.",
         "not-authenticated": "Your session expired — please sign in again.",
         "no-business": "No business found for this account.",
-        "not-found": "Couldn't save — try again.",
+        "not-found": "Couldn't save. Please try again.",
         locked: "Your subscription has expired. Renew to keep editing your menu.",
       };
-      setError(messages[result.reason] ?? "Couldn't save — try again.");
+      setError(messages[result.reason] ?? "Couldn't save. Please try again.");
       return;
     }
 
@@ -127,6 +146,7 @@ export function ItemForm({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onBlur={() => descriptionFieldRef.current?.triggerAutoDraft()}
           placeholder="e.g. Sizzling Sisig"
           className="h-11 rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         />
@@ -173,19 +193,16 @@ export function ItemForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="item-description" className="text-sm font-medium">
-          Description
-        </label>
-        <textarea
-          id="item-description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-          placeholder="Optional — a short, appetizing description"
-          className="rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        />
-      </div>
+      <ItemDescriptionField
+        ref={descriptionFieldRef}
+        itemId={item?.id}
+        name={name}
+        initialDescription={item?.description ?? ""}
+        initialDescriptionSource={item?.descriptionSource ?? null}
+        initialKeywords={item?.aiKeywords ?? null}
+        onDescriptionChange={handleDescriptionChange}
+        onAcceptedDraft={handleAcceptedDraft}
+      />
 
       <IngredientTagInput
         allIngredients={ingredientOptions}
@@ -195,33 +212,22 @@ export function ItemForm({
       />
 
       <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
-        <label className="flex items-center justify-between gap-4 text-sm font-medium">
+        <div className="flex items-center justify-between gap-4 text-sm font-medium">
           Best Seller
-          <input
-            type="checkbox"
-            checked={isBestSeller}
-            onChange={(e) => setIsBestSeller(e.target.checked)}
-            className="size-4"
-          />
-        </label>
-        <label className="flex items-center justify-between gap-4 text-sm font-medium">
+          <Switch checked={isBestSeller} onCheckedChange={setIsBestSeller} ariaLabel="Best Seller" />
+        </div>
+        <div className="flex items-center justify-between gap-4 text-sm font-medium">
           Available
-          <input
-            type="checkbox"
+          <Switch
             checked={!isSoldOut}
-            onChange={(e) => setIsSoldOut(!e.target.checked)}
-            className="size-4"
+            onCheckedChange={(checked) => setIsSoldOut(!checked)}
+            ariaLabel="Available"
           />
-        </label>
-        <label className="flex items-center justify-between gap-4 text-sm font-medium">
+        </div>
+        <div className="flex items-center justify-between gap-4 text-sm font-medium">
           Show on Menu
-          <input
-            type="checkbox"
-            checked={isDisplayed}
-            onChange={(e) => setIsDisplayed(e.target.checked)}
-            className="size-4"
-          />
-        </label>
+          <Switch checked={isDisplayed} onCheckedChange={setIsDisplayed} ariaLabel="Show on Menu" />
+        </div>
       </div>
 
       {error && (

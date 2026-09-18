@@ -59,16 +59,19 @@ export async function adminGetSupportTicketsForBusiness(
 
 /**
  * specs/021-support-ticket-management FR-009 (research.md Decision 1):
- * replying always auto-resolves — fixed from a pre-existing, uncalled
- * "in_progress" default that contradicted this spec's own requirement.
+ * replying defaults to auto-resolving — but only when the caller doesn't
+ * pass an explicit `status` override. Without the optional parameter, an
+ * admin's own explicit status choice (e.g. "In Progress") made just before
+ * sending a reply would silently get stomped back to "resolved" here.
  */
 export async function adminReplyToSupportTicket(
   ticketId: string,
-  reply: string
+  reply: string,
+  status?: SupportTicket["status"]
 ): Promise<SupportTicket | null> {
   const [ticket] = await db
     .update(supportTickets)
-    .set({ adminReply: reply, repliedAt: new Date(), status: "resolved" })
+    .set({ adminReply: reply, repliedAt: new Date(), status: status ?? "resolved" })
     .where(eq(supportTickets.id, ticketId))
     .returning();
   return ticket ?? null;

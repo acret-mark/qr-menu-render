@@ -132,8 +132,11 @@ export function IngredientTagInput({
           className="h-11 w-full rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         />
 
-        {(suggestions.length > 0 || showCreateOption) && (
+        {trimmedQuery !== "" && (
           <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+            {suggestions.length === 0 && !showCreateOption && (
+              <li className="px-3.5 py-2 text-sm text-muted-foreground">No ingredients found.</li>
+            )}
             {suggestions.map((ingredient) => (
               <li key={ingredient.id}>
                 <button

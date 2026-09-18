@@ -115,10 +115,20 @@ export default async function PublicMenuPage({
   }));
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col">
+    // `relative` is load-bearing: ItemDetailSheet (rendered inside
+    // MenuSearch below) positions itself `absolute inset-0` against the
+    // nearest positioned ancestor, which is deliberately this shell — not
+    // MenuSearch's own wrapper — so the sheet's dimmed backdrop covers the
+    // hero/identity card too, matching qr-menu-dev's menu-home.tsx (the
+    // whole app, not just the scrolling item list, dims behind the sheet).
+    // `h-dvh` + `overflow-hidden` (replacing the old `min-h-screen`) makes
+    // this a true mobile-app-shell frame: MenuSearch's own flex-1 min-h-0
+    // region is what scrolls, everything else here stays fixed in place.
+    <div className="relative mx-auto flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-background">
       <OfflineIndicator />
       <MenuHeader
         name={business.name}
+        address={business.address}
         logoUrl={business.logoUrl}
         languageSelector={
           isPro ? <LanguageSelector currentLanguage={selectedLanguage} /> : undefined

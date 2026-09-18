@@ -27,12 +27,20 @@ export function DeleteCategoryDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleConfirm() {
     if (deleting) return;
     setDeleting(true);
-    await deleteCategory({ id: categoryId });
+    setError(null);
+    const result = await deleteCategory({ id: categoryId });
     setDeleting(false);
+
+    if (!result.ok) {
+      setError("Couldn't delete. Please try again.");
+      return;
+    }
+
     onOpenChange(false);
   }
 
@@ -40,13 +48,16 @@ export function DeleteCategoryDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete category?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {itemCount > 0 ? "Delete category and its items?" : "Delete this category?"}
+          </AlertDialogTitle>
           <AlertDialogDescription>
             {itemCount > 0
               ? `Delete "${categoryName}" and its ${itemCount} item${itemCount === 1 ? "" : "s"}? This can't be undone.`
               : `Delete "${categoryName}"? This can't be undone.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {error && <p className="text-sm text-destructive">{error}</p>}
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction

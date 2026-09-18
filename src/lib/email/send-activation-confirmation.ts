@@ -1,4 +1,5 @@
 import { sendMail } from "./google-smtp-client";
+import { renderEmailHtml } from "./template";
 
 export type SendActivationConfirmationInput = {
   toEmail: string;
@@ -18,6 +19,14 @@ export async function sendActivationConfirmationEmail({
   businessName,
   plan,
 }: SendActivationConfirmationInput): Promise<SendActivationConfirmationResult> {
+  const html = renderEmailHtml({
+    heading: `${businessName} is live!`,
+    paragraphs: [
+      `Great news — your ${plan} subscription has been activated and <strong>${businessName}</strong> is now live on Hapag.`,
+      "Customers can now scan your QR code and view your menu.",
+    ],
+  });
+
   return sendMail({
     to: toEmail,
     subject: `${businessName} is live on Hapag!`,
@@ -28,5 +37,6 @@ export async function sendActivationConfirmationEmail({
       "",
       "Thanks for choosing Hapag.",
     ].join("\n"),
+    html,
   });
 }

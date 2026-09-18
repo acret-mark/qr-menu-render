@@ -10,8 +10,8 @@ export function SearchInput({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-full border border-border bg-muted px-3.5 py-2.5 text-sm">
-      <Search className="size-4 shrink-0 text-muted-foreground" />
+    <div className="mt-6 flex items-center gap-2 rounded-full bg-muted px-3.5 py-3.5 text-[0.9rem]">
+      <Search className="size-4 shrink-0 opacity-70" />
       <input
         type="text"
         value={value}

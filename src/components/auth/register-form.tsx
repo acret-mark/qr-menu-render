@@ -7,7 +7,9 @@ import { registerAction } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const MIN_PASSWORD_LENGTH = 8;
+// Matches the server-side minimum enforced by registerOwner/resetPasswordAction
+// (src/lib/auth/password-reset.ts) — keep both in sync.
+const MIN_PASSWORD_LENGTH = 6;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type FieldErrors = Partial<

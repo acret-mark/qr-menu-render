@@ -28,7 +28,7 @@ export function SearchResults({
       <p className="pb-1 pt-3 text-[0.82rem] text-muted-foreground">
         {results.length} result{results.length === 1 ? "" : "s"} for &ldquo;{query}&rdquo;
       </p>
-      <ul className="flex flex-col divide-y divide-border">
+      <ul className="flex flex-col gap-6 pb-6 pt-2">
         {results.map(({ item }) => (
           <MenuItemCard key={item.id} item={item} onOpen={() => onOpenItem(item.id)} />
         ))}

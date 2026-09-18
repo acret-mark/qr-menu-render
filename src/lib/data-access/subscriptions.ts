@@ -208,9 +208,16 @@ export async function adminRejectSubscription(subscriptionId: string): Promise<S
 }
 
 /**
- * Reproduces qr-menu-dev's `grant_active_subscription`: an admin-declared
- * paid-plan grant with no existing pending row required. No internal admin
- * check (FR-007) — same trust model as adminActivateSubscription above.
+ * Reproduces qr-menu-dev's `grant_active_subscription` Postgres function
+ * (supabase/migrations/20260904000000_add_grant_active_subscription_fn.sql):
+ * an admin-declared paid-plan grant with no existing pending row required.
+ * That function does two writes in one atomic call — inserts the active
+ * subscription row, then `update businesses set status = 'active', plan =
+ * p_plan` — so this is wrapped in one db.transaction() (same pattern as
+ * adminActivateSubscription above) to reproduce that same all-or-nothing
+ * guarantee instead of leaving a window where the subscription row exists
+ * but the business is still locked. No internal admin check (FR-007) — same
+ * trust model as adminActivateSubscription above.
  */
 export async function adminGrantActiveSubscription(
   adminId: string,
@@ -218,44 +225,78 @@ export async function adminGrantActiveSubscription(
   plan: Exclude<PlanType, "trial">,
   expiresAt: Date
 ): Promise<Subscription> {
-  const [subscription] = await db
-    .insert(subscriptions)
-    .values({
-      businessId,
-      plan,
-      amount: "0",
-      status: "active",
-      activatedBy: adminId,
-      activatedAt: new Date(),
-      startsAt: new Date(),
-      expiresAt,
-    })
-    .returning();
+  const { subscription, slug } = await db.transaction(async (tx) => {
+    const [subscription] = await tx
+      .insert(subscriptions)
+      .values({
+        businessId,
+        plan,
+        amount: "0",
+        status: "active",
+        activatedBy: adminId,
+        activatedAt: new Date(),
+        startsAt: new Date(),
+        expiresAt,
+      })
+      .returning();
+
+    const [business] = await tx
+      .update(businesses)
+      .set({ status: "active", plan })
+      .where(eq(businesses.id, businessId))
+      .returning({ slug: businesses.slug });
+
+    return { subscription, slug: business?.slug };
+  });
+
+  // specs/026-menu-data-caching FR-003/FR-004/FR-009: the grant flips the
+  // business to active — called after the transaction commits, same as
+  // adminActivateSubscription (updateTag is a cache API, not a DB operation).
+  if (slug) updateTag(`menu:${slug}`);
   return subscription;
 }
 
 /**
- * Reproduces qr-menu-dev's `grant_trial_subscription`. No internal admin
- * check (FR-007) — same trust model as the two functions above.
+ * Reproduces qr-menu-dev's `grant_trial_subscription` Postgres function
+ * (supabase/migrations/20260902020000_add_grant_trial_subscription_fn.sql):
+ * same two-write shape as grant_active_subscription above — inserts the
+ * trial subscription row, then `update businesses set status = 'trial'`
+ * (no plan column touched; the RPC has no plan parameter, matching
+ * setBusinessStatusAndPlan's trial branch applying plan in a second,
+ * separate write). Wrapped in one db.transaction() for the same
+ * atomicity reason as adminGrantActiveSubscription. No internal admin
+ * check (FR-007) — same trust model as the functions above.
  */
 export async function adminGrantTrialSubscription(
   adminId: string,
   businessId: string,
   expiresAt: Date
 ): Promise<Subscription> {
-  const [subscription] = await db
-    .insert(subscriptions)
-    .values({
-      businessId,
-      plan: "trial",
-      amount: "0",
-      status: "active",
-      activatedBy: adminId,
-      activatedAt: new Date(),
-      startsAt: new Date(),
-      expiresAt,
-    })
-    .returning();
+  const { subscription, slug } = await db.transaction(async (tx) => {
+    const [subscription] = await tx
+      .insert(subscriptions)
+      .values({
+        businessId,
+        plan: "trial",
+        amount: "0",
+        status: "active",
+        activatedBy: adminId,
+        activatedAt: new Date(),
+        startsAt: new Date(),
+        expiresAt,
+      })
+      .returning();
+
+    const [business] = await tx
+      .update(businesses)
+      .set({ status: "trial" })
+      .where(eq(businesses.id, businessId))
+      .returning({ slug: businesses.slug });
+
+    return { subscription, slug: business?.slug };
+  });
+
+  if (slug) updateTag(`menu:${slug}`);
   return subscription;
 }
 

@@ -37,7 +37,7 @@ export function TicketAwaitingResponse({
         <p className="mt-1.5 text-sm whitespace-pre-wrap">{ticket.message}</p>
 
         <div className="mt-4 border-t border-dashed border-border pt-4">
-          <div className="text-sm font-medium text-muted-foreground">Hapag Support</div>
+          <div className="text-sm font-medium text-muted-foreground">ACRET Support</div>
           <p className="mt-1.5 text-sm text-muted-foreground italic">Awaiting response</p>
         </div>
       </div>

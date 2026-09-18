@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, UtensilsCrossed, FolderKanban, QrCode } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NavSection = "dashboard" | "menu" | "categories" | "qr";
@@ -11,11 +11,11 @@ const SECTIONS: {
   section: NavSection;
   label: string;
   href: string;
-  icon: typeof LayoutDashboard;
+  icon: typeof Home;
 }[] = [
-  { section: "dashboard", label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { section: "dashboard", label: "Dashboard", href: "/dashboard", icon: Home },
   { section: "menu", label: "Menu", href: "/dashboard/menu", icon: UtensilsCrossed },
-  { section: "categories", label: "Categories", href: "/categories", icon: FolderKanban },
+  { section: "categories", label: "Categories", href: "/categories", icon: Tag },
   { section: "qr", label: "QR", href: "/qr", icon: QrCode },
 ];
 

@@ -1,4 +1,5 @@
 import { sendMail } from "./google-smtp-client";
+import { renderEmailHtml } from "./template";
 
 export type SendWelcomeEmailInput = {
   toEmail: string;
@@ -21,6 +22,15 @@ export async function sendWelcomeEmail({
   businessName,
 }: SendWelcomeEmailInput): Promise<SendWelcomeEmailResult> {
   const loginUrl = `${SITE_URL}/login`;
+
+  const html = renderEmailHtml({
+    heading: `Welcome, ${businessName}!`,
+    paragraphs: [`Welcome aboard — ${businessName} is now set up on Hapag.`],
+    highlight:
+      "Next step: build your menu by adding categories and items, then generate your QR code so customers can start ordering.",
+    cta: { label: "Log in to get started", url: loginUrl },
+  });
+
   return sendMail({
     to: toEmail,
     subject: `Welcome to Hapag, ${businessName}!`,
@@ -33,5 +43,6 @@ export async function sendWelcomeEmail({
       "",
       "Thanks for choosing Hapag.",
     ].join("\n"),
+    html,
   });
 }

@@ -3,14 +3,7 @@
 import { useState } from "react";
 import { saveCategory } from "@/lib/categories/actions";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 type Category = { id: string; name: string };
@@ -54,7 +47,7 @@ export function CategoryForm({
 
     if (!result.ok) {
       setError(
-        result.reason === "empty-name" ? "Name is required." : "Couldn't save — try again."
+        result.reason === "empty-name" ? "Name is required." : "Couldn't save. Please try again."
       );
       return;
     }
@@ -64,15 +57,10 @@ export function CategoryForm({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent showCloseButton={false}>
         <form onSubmit={handleSubmit} noValidate>
           <DialogHeader>
             <DialogTitle>{isEdit ? "Edit category" : "Add category"}</DialogTitle>
-            <DialogDescription>
-              {isEdit
-                ? "Update this category's name."
-                : "Give your new category a name."}
-            </DialogDescription>
           </DialogHeader>
 
           <div className="mt-4 flex flex-col gap-1.5">
@@ -95,11 +83,12 @@ export function CategoryForm({
             {error && <span className="text-xs text-destructive">{error}</span>}
           </div>
 
-          <DialogFooter>
+          <div className="mt-2 flex justify-end gap-2">
+            <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>
             <Button type="submit" disabled={submitting}>
               {submitting ? "Saving…" : "Save"}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

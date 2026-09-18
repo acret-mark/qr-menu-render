@@ -1,4 +1,5 @@
 import { sendMail } from "./google-smtp-client";
+import { renderEmailHtml } from "./template";
 import type { ReminderThreshold } from "@/lib/subscriptions/expiry";
 
 export type SendSubscriptionReminderInput = {
@@ -60,23 +61,14 @@ export async function sendSubscriptionReminder({
     ...(urgency ? ["", `Urgent: ${urgency}`] : []),
   ].join("\n");
 
-  const html = `
-<div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;color:#1a1a1a">
-  <h2 style="margin:0 0 16px;font-size:18px;font-weight:600">Subscription Reminder</h2>
-  <p style="margin:0 0 16px;font-size:14px;line-height:1.5">
-    Your <strong>${businessName}</strong> ${kind} on Hapag <strong>${expiryVerb} ${timing}</strong>.
-  </p>
-  <p style="margin:0 0 16px;font-size:14px;line-height:1.5;padding:12px 16px;background:#f5f5f5;border-radius:8px">
-    <strong>Next step:</strong> ${action}
-  </p>
-  ${
-    urgency
-      ? `<p style="margin:0;font-size:13px;line-height:1.5;padding:12px 16px;background:#fdecea;border-left:3px solid #d93025;border-radius:4px">
-    <strong>Urgent:</strong> ${urgency}
-  </p>`
-      : ""
-  }
-</div>`.trim();
+  const html = renderEmailHtml({
+    heading: "Subscription Reminder",
+    paragraphs: [
+      `Your <strong>${businessName}</strong> ${kind} on Hapag <strong>${expiryVerb} ${timing}</strong>.`,
+    ],
+    highlight: `<strong>Next step:</strong> ${action}`,
+    urgent: urgency ? `<strong>Urgent:</strong> ${urgency}` : undefined,
+  });
 
   return sendMail({ to: toEmail, subject: SUBJECT, text, html });
 }

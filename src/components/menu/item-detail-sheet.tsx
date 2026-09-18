@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import { Fraunces } from "next/font/google";
 import { ImageOff, Star, X } from "lucide-react";
 import { cloudinaryLoader } from "@/lib/images/cloudinary";
 import { cn } from "@/lib/utils";
@@ -12,9 +13,17 @@ import type { MenuDisplayItem } from "@/components/menu/menu-item-card";
 // superseded pre-merge accordion spec text (Constitution Principle IV).
 const TRANSITION_MS = 300;
 
+// Scoped to this one file, same as qr-menu-dev's own item-detail-sheet.tsx —
+// next/font/google's build-time transform only bundles this for routes that
+// actually import this component. Playfair Display (font-heading, used
+// elsewhere in this sheet via the base-layer h1-h4 rule) is already loaded
+// globally; this is deliberately a second, different display face for the
+// price only, matching qr-menu-dev's visual choice exactly.
+const priceFont = Fraunces({ subsets: ["latin"], weight: ["700", "900"], display: "swap" });
+
 function formatPrice(price: string): string {
   const n = Number(price);
-  return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 export function ItemDetailSheet({
@@ -110,20 +119,25 @@ export function ItemDetailSheet({
             )}
             {item.isSoldOut && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                <span className="text-xl font-bold text-white">Sold Out</span>
+                <span className="font-heading text-xl font-bold text-white">Sold Out</span>
               </div>
             )}
           </div>
 
           <div className="px-5 pb-8 pt-5">
-            <div className="text-right text-3xl font-bold text-accent tabular-nums">
+            <div
+              className={cn(
+                priceFont.className,
+                "text-right text-4xl font-bold text-accent tabular-nums"
+              )}
+            >
               {formatPrice(item.price)}
             </div>
-            <div className="mt-1 flex items-center gap-1.5 text-xl font-semibold">
+            <div className="mt-1 flex items-center gap-1.5 font-heading text-xl font-bold">
               <span>{item.name}</span>
               {item.isBestSeller && (
                 <Star
-                  className="size-4 shrink-0 fill-amber-400 text-amber-400"
+                  className="size-[18px] shrink-0 fill-warning text-warning"
                   aria-label="Best seller"
                 />
               )}

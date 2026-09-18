@@ -27,12 +27,16 @@ export default async function SupportTicketsPage() {
       createdAt: t.createdAt,
     }));
 
+  const openCount = rows.filter((row) => row.status !== "resolved").length;
+
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold">Support Tickets</h1>
         <p className="text-sm text-muted-foreground">
-          Owner-submitted questions and issues across every business.
+          {rows.length === 0
+            ? "No support tickets yet."
+            : `${rows.length} ${rows.length === 1 ? "ticket" : "tickets"} · ${openCount} open`}
         </p>
       </div>
 

@@ -48,6 +48,7 @@ export default async function MenuPage() {
           </Link>{" "}
           to start adding items.
         </p>
+        {!locked && <AddItemFab />}
       </div>
     );
   }

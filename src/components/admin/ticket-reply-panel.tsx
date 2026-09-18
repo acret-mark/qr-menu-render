@@ -20,22 +20,31 @@ const STATUS_OPTIONS: { value: SupportTicket["status"]; label: string }[] = [
 ];
 
 // specs/021-support-ticket-management US2/US3. The status control (FR-010)
-// calls adminSetTicketStatus directly and independently — it is never
-// bundled into the reply submission (research.md Decision 2 chose a wholly
-// separate function, not an optional parameter on the reply action), so
-// unlike qr-menu-dev's own combined-submission UI, there is no need to
-// track a local "pending override" — a status change saves immediately and
-// router.refresh() reflects the new server state.
+// calls adminSetTicketStatus directly and independently the moment it
+// changes — it is never bundled into the reply submission (research.md
+// Decision 2 chose a wholly separate function, not an optional parameter on
+// the reply action). That immediate save is still not enough on its own,
+// though: adminReplyToSupportTicket defaults to auto-resolving a ticket on
+// reply (FR-009), and without also telling it about an admin's own explicit
+// status pick, sending a reply right after changing the status would
+// silently stomp that choice back to "resolved". `statusOverride` tracks
+// only an admin-initiated change (never a mirrored copy of `ticket.status`,
+// which would go stale between this change and the next `router.refresh()`)
+// and is threaded into both the status control's displayed value and the
+// reply submission, mirroring qr-menu-dev's own ticket-reply-panel.tsx.
 export function TicketReplyPanel({ ticket }: { ticket: SupportTicket & { businessName: string } }) {
   const router = useRouter();
   const [reply, setReply] = useState(ticket.adminReply ?? "");
+  const [statusOverride, setStatusOverride] = useState<SupportTicket["status"] | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChangingStatus, setIsChangingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const status = statusOverride ?? ticket.status;
   const trimmedReply = reply.trim();
 
   async function handleStatusChange(nextStatus: SupportTicket["status"]) {
+    setStatusOverride(nextStatus);
     setIsChangingStatus(true);
     setError(null);
     try {
@@ -55,7 +64,14 @@ export function TicketReplyPanel({ ticket }: { ticket: SupportTicket & { busines
     setIsSubmitting(true);
     setError(null);
     try {
-      const result = await replyToTicketAction(ticket.id, trimmedReply);
+      // Only passes an explicit status when the admin actually changed the
+      // control themselves — otherwise omit it so the server's "resolved"
+      // default (FR-009) applies.
+      const result = await replyToTicketAction(
+        ticket.id,
+        trimmedReply,
+        statusOverride ?? undefined
+      );
       if (!result.ok) {
         setError(
           result.reason === "empty-reply"
@@ -85,7 +101,7 @@ export function TicketReplyPanel({ ticket }: { ticket: SupportTicket & { busines
         </label>
         <select
           id="ticket-status"
-          value={ticket.status}
+          value={status}
           disabled={isChangingStatus}
           onChange={(e) => handleStatusChange(e.target.value as SupportTicket["status"])}
           className={FIELD_CLASSNAME}

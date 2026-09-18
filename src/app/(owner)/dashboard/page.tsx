@@ -3,7 +3,25 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getOwnBusiness } from "@/lib/data-access/businesses";
 import { getOwnCategories } from "@/lib/data-access/categories";
 import { getOwnItems } from "@/lib/data-access/items";
-import { StatusBanner } from "@/components/dashboard/status-banner";
+
+// Manila-local time-of-day greeting, matching qr-menu-dev's dashboard page
+// exactly — owners are Philippines-based, so the greeting is computed
+// against Asia/Manila regardless of the server's own timezone.
+function getManilaHour(date: Date): number {
+  return Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Manila",
+      hour: "numeric",
+      hourCycle: "h23",
+    }).format(date)
+  );
+}
+
+function getGreeting(hour: number): string {
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 // Owner dashboard (specs/009-owner-dashboard-shell FR-001–FR-004, FR-010).
 // Session gate now lives in (owner)/layout.tsx (FR-012) — this page only
@@ -29,7 +47,11 @@ export default async function DashboardPage() {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
       <h1 className="text-2xl font-semibold">Dashboard</h1>
 
-      {business && <StatusBanner status={business.status} />}
+      {business && (
+        <p className="text-base">
+          {getGreeting(getManilaHour(new Date()))}, {business.name}
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <Link
@@ -49,16 +71,19 @@ export default async function DashboardPage() {
       </div>
 
       {business && (
-        <div className="rounded-lg border border-border p-4">
+        <Link
+          href="/business-profile#subscription"
+          className="rounded-lg border border-border p-4 hover:bg-muted"
+        >
           <p className="font-medium">{business.name}</p>
           <p className="text-sm text-muted-foreground">
             {business.plan} plan · {business.status}
           </p>
-        </div>
+        </Link>
       )}
 
       <Link href="/qr" className="rounded-lg border border-border p-4 hover:bg-muted">
-        View QR code
+        Download QR
       </Link>
     </div>
   );

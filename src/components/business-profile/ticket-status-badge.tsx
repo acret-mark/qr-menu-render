@@ -13,7 +13,7 @@ const ticketStatusBadgeVariants = cva(
     variants: {
       status: {
         open: "bg-warning text-warning-foreground",
-        in_progress: "bg-muted text-muted-foreground",
+        in_progress: "bg-warning text-warning-foreground",
         resolved: "bg-success/15 text-success",
       } satisfies Record<SupportTicket["status"], string>,
     },

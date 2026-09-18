@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
+import { eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/session";
 import { requireEditAccess } from "@/lib/auth/edit-access";
 import {
   createOwnItem,
   deleteOwnItem,
+  getOwnItemById,
   setOwnItemSoldOut,
   updateOwnItem,
 } from "@/lib/data-access/items";
@@ -17,6 +19,10 @@ import { validateImageFile } from "@/lib/uploads/image-validation";
 import { uploadImage } from "@/lib/cloudinary/client";
 import { sha256Hex } from "@/lib/hash";
 import { getRequiredDisplayLanguages } from "@/lib/categories/translation-status";
+import { db } from "@/lib/db/client";
+import { items } from "@/lib/db/schema";
+import { generateDescription } from "@/lib/items/ai-description-client";
+import { checkAndIncrementDailyLimit } from "@/lib/items/ai-description-rate-limit";
 
 function isValidPrice(price: number): boolean {
   return Number.isFinite(price) && price >= 0 && Math.round(price * 100) === price * 100;
@@ -53,6 +59,11 @@ export async function saveItem(input: {
   isDisplayed?: boolean;
   isSoldOut?: boolean;
   isBestSeller?: boolean;
+  // Set when the caller just accepted an AI-generated draft for this save
+  // (item-description-field.tsx) — records provenance on the item row so a
+  // later edit can tell an AI-drafted description apart from a hand-written
+  // one (the "AI-drafted" badge).
+  acceptedAiDraft?: { keywords: string[] };
 }): Promise<SaveItemResult> {
   const user = await requireUser();
 
@@ -77,6 +88,31 @@ export async function saveItem(input: {
 
   const description = input.description?.trim() || undefined;
 
+  // specs/items AI description provenance (qr-menu-dev parity): an accepted
+  // AI draft is tagged "ai_generated" with its keywords; any other change to
+  // the description text is tagged "manual" — an unrelated field-only save
+  // (price, photo, etc.) leaves the existing provenance untouched.
+  const existingItem = input.id ? await getOwnItemById(user.id, input.id) : null;
+  if (input.id && !existingItem) return { ok: false, reason: "not-found" };
+
+  const hasManualDescriptionChange = existingItem
+    ? (existingItem.description ?? "").trim() !== (description ?? "")
+    : !!description;
+
+  const provenanceFields: Partial<{
+    descriptionSource: "ai_generated" | "manual";
+    aiKeywords: string[];
+    aiGeneratedAt: Date;
+  }> = input.acceptedAiDraft
+    ? {
+        descriptionSource: "ai_generated",
+        aiKeywords: input.acceptedAiDraft.keywords,
+        aiGeneratedAt: new Date(),
+      }
+    : hasManualDescriptionChange
+      ? { descriptionSource: "manual" }
+      : {};
+
   const fields = {
     categoryId: input.categoryId,
     name,
@@ -92,6 +128,10 @@ export async function saveItem(input: {
     ? await updateOwnItem(user.id, input.id, fields)
     : await createOwnItem(user.id, fields);
   if (!item) return { ok: false, reason: "not-found" };
+
+  if (Object.keys(provenanceFields).length > 0) {
+    await db.update(items).set(provenanceFields).where(eq(items.id, item.id));
+  }
 
   if (description) {
     const requiredLanguages = getRequiredDisplayLanguages(business.sourceLanguage);
@@ -190,4 +230,44 @@ export async function uploadItemPhoto(formData: FormData): Promise<UploadItemPho
     console.error("uploadItemPhoto: upload failed", error);
     return { ok: false, message: "The upload failed. Please try again." };
   }
+}
+
+export type GenerateItemDescriptionInput = {
+  itemId?: string;
+  name: string;
+  keywords?: string;
+};
+
+export type GenerateItemDescriptionResult =
+  | { ok: true; text: string }
+  | { ok: false; reason: "limit-reached" }
+  | { ok: false; reason: "generation-failed" };
+
+/**
+ * Ported from qr-menu-dev's generateItemDescription (src/lib/items/actions.ts)
+ * — same Gemini-primary/Claude-Haiku-fallback generation and per-item daily
+ * cap, adapted to render's own requireUser/requireEditAccess auth
+ * conventions instead of qr-menu-dev's Supabase session + getSubscriptionAccess
+ * check.
+ */
+export async function generateItemDescription(
+  input: GenerateItemDescriptionInput
+): Promise<GenerateItemDescriptionResult> {
+  const user = await requireUser();
+
+  const editAccess = await requireEditAccess(user.id);
+  if (!editAccess.ok) return { ok: false, reason: "generation-failed" };
+
+  const business = await getOwnBusiness(user.id);
+  if (!business) return { ok: false, reason: "generation-failed" };
+
+  if (input.itemId) {
+    const { allowed } = await checkAndIncrementDailyLimit(input.itemId, business.id);
+    if (!allowed) return { ok: false, reason: "limit-reached" };
+  }
+
+  const result = await generateDescription(input.name, input.keywords);
+  if (!result.ok) return { ok: false, reason: "generation-failed" };
+
+  return { ok: true, text: result.text };
 }

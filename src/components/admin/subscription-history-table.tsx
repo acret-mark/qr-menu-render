@@ -1,4 +1,6 @@
 import { formatAdminDate, formatPaymentMethod, formatPeso } from "@/lib/admin/format";
+import { SubscriptionStatusBadge } from "@/components/admin/subscription-status-badge";
+import type { Subscription } from "@/lib/data-access/subscriptions";
 
 // specs/018-business-detail FR-004/FR-005/SC-002. Every record regardless
 // of status — no pending/active filter here (that's the Payments queue's
@@ -12,7 +14,7 @@ export function SubscriptionHistoryTable({
     plan: string;
     amount: string;
     paymentMethod: string | null;
-    status: string;
+    status: Subscription["status"];
   }[];
 }) {
   if (subscriptions.length === 0) {
@@ -41,7 +43,9 @@ export function SubscriptionHistoryTable({
             <td className="px-5 py-3.5 capitalize">{subscription.plan}</td>
             <td className="px-5 py-3.5">{formatPeso(subscription.amount)}</td>
             <td className="px-5 py-3.5">{formatPaymentMethod(subscription.paymentMethod)}</td>
-            <td className="px-5 py-3.5 capitalize">{subscription.status}</td>
+            <td className="px-5 py-3.5">
+              <SubscriptionStatusBadge status={subscription.status} />
+            </td>
           </tr>
         ))}
       </tbody>
