@@ -8,7 +8,7 @@ import {
 // are rendered by (owner)/layout.tsx outside this route's Suspense boundary.
 export default function MenuLoading() {
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
+    <div className="flex flex-col gap-4">
       <OwnerPageHeaderSkeleton />
 
       <div className="flex gap-2">

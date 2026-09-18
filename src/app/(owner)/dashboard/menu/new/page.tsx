@@ -25,8 +25,8 @@ export default async function NewItemPage() {
       // navigation to this URL (the underlying saveItem action rejects it
       // server-side either way).
       return (
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-          <h1 className="text-2xl font-semibold">Add item</h1>
+        <div className="flex flex-col gap-4">
+          <h1 className="font-heading text-xl font-semibold">Add item</h1>
           <p className="text-sm text-muted-foreground">
             Your subscription has expired. Renew from the{" "}
             <Link href="/business-profile#subscription" className="text-accent underline">
@@ -46,8 +46,8 @@ export default async function NewItemPage() {
 
   if (categories.length === 0) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-        <h1 className="text-2xl font-semibold">Add item</h1>
+      <div className="flex flex-col gap-4">
+        <h1 className="font-heading text-xl font-semibold">Add item</h1>
         <p className="text-sm text-muted-foreground">
           No categories yet.{" "}
           <Link href="/categories" className="text-accent underline">
@@ -60,8 +60,8 @@ export default async function NewItemPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
-      <h1 className="text-2xl font-semibold">Add item</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="font-heading text-xl font-semibold">Add item</h1>
       <ItemForm categories={categories} allIngredients={allIngredients} />
     </div>
   );

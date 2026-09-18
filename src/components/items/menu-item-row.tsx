@@ -56,26 +56,31 @@ export function MenuItemRow({
 
   return (
     <li className="flex items-center gap-3 px-4 py-3">
-      <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted">
-        <ImageOff className="size-5 text-muted-foreground" />
+      <div className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
+        <ImageOff size={20} />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <span className="flex items-center gap-1.5 truncate font-medium">
-          {item.isBestSeller && (
-            <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" aria-label="Best seller" />
-          )}
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-1.5 truncate text-base font-medium">
           <span className="truncate">{item.name}</span>
-        </span>
-        <span className="text-xs text-muted-foreground">{formatPrice(item.price)}</span>
+          {item.isBestSeller && (
+            <span
+              className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.65rem] font-semibold text-primary"
+              title="Best seller"
+            >
+              <Star size={10} className="fill-current" />
+            </span>
+          )}
+        </p>
+        <p className="text-sm text-muted-foreground">{formatPrice(item.price)}</p>
         {item.hasStaleTranslation && (
-          <span className="mt-1 inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-            <TriangleAlert className="size-3.5" />
+          <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+            <TriangleAlert size={12} />
             Translation pending
-          </span>
+          </p>
         )}
         {saveFailed && (
-          <span className="mt-1 text-xs text-destructive">Couldn&apos;t save — try again.</span>
+          <p className="mt-0.5 text-xs text-destructive">Couldn&apos;t save — try again.</p>
         )}
       </div>
 
@@ -106,10 +111,11 @@ export function MenuItemRow({
 
           <Link
             href={`/dashboard/menu/${item.id}/edit`}
-            aria-label={`Edit ${item.name}`}
-            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="flex size-9 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            <Pencil className="size-4" />
+            <Pencil size={16} />
+            <span className="text-[0.65rem]">Edit</span>
+            <span className="sr-only">Edit {item.name}</span>
           </Link>
         </>
       )}

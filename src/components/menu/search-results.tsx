@@ -14,10 +14,10 @@ export function SearchResults({
   if (results.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
-        <div className="flex size-[52px] items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <SearchX className="size-6" strokeWidth={2} />
+        <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <SearchX size={26} strokeWidth={2} />
         </div>
-        <h2 className="text-lg font-medium">No matches for &ldquo;{query}&rdquo;</h2>
+        <h2 className="text-xl">No matches for &ldquo;{query}&rdquo;</h2>
         <p className="max-w-[32ch] text-sm text-muted-foreground">Try a different search term.</p>
       </div>
     );

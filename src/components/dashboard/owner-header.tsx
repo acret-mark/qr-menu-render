@@ -22,7 +22,7 @@ function getInitials(name: string): string {
 // UI in this codebase that reaches the existing signOutAction.
 export function OwnerHeader({ businessName }: { businessName: string }) {
   return (
-    <header className="flex items-center justify-between border-b border-border px-6 py-3">
+    <header className="flex items-center justify-between gap-2">
       <Link href="/dashboard">
         <Image src="/brand.png" alt="Hapag" width={530} height={154} className="h-6 w-auto shrink-0" />
       </Link>

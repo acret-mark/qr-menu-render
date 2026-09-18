@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { toDataURL } from "qrcode";
 import { jsPDF } from "jspdf";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
 // Fixed regardless of on-screen display size — print-quality resolution
@@ -88,7 +89,7 @@ export function QrCodeView({ name, slug }: { name: string; slug: string }) {
   const displayUrl = menuUrl?.replace(/^https?:\/\//, "") ?? "";
 
   return (
-    <div className="flex flex-col items-center gap-4 py-4">
+    <div className="flex flex-col items-center gap-4 px-4 py-6">
       <p className="text-sm text-muted-foreground">Scan to view your menu</p>
 
       <div className="flex size-64 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
@@ -96,26 +97,20 @@ export function QrCodeView({ name, slug }: { name: string; slug: string }) {
           // eslint-disable-next-line @next/next/no-img-element -- a data: URL, not an optimizable remote image
           <img src={qrDataUrl} alt={`QR code linking to ${name}'s menu`} className="size-full" />
         ) : (
-          <div className="size-full animate-pulse bg-muted" />
+          <Skeleton className="size-56" />
         )}
       </div>
 
-      <div className="flex flex-col items-center gap-1">
+      <div className="text-center">
         <p className="font-heading text-lg font-semibold">{name}</p>
         <p className="text-sm text-muted-foreground">{displayUrl || " "}</p>
       </div>
 
-      <div className="flex w-full max-w-xs flex-col gap-2">
-        <Button size="lg" disabled={!ready} onClick={handleDownloadPng} className="h-11 w-full">
+      <div className="mt-2 flex w-full max-w-xs flex-col gap-3">
+        <Button disabled={!ready} onClick={handleDownloadPng} className="h-11">
           Download PNG
         </Button>
-        <Button
-          variant="outline"
-          size="lg"
-          disabled={!ready}
-          onClick={handleDownloadPdf}
-          className="h-11 w-full"
-        >
+        <Button variant="outline" disabled={!ready} onClick={handleDownloadPdf} className="h-11">
           Download PDF
         </Button>
       </div>

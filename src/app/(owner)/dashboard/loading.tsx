@@ -6,18 +6,24 @@ import { OwnerPageHeaderSkeleton } from "@/components/dashboard/owner-shell-skel
 // Suspense boundary, so they're already on screen by the time this shows.
 export default function DashboardLoading() {
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-12">
+    <div className="flex flex-col gap-4">
       <OwnerPageHeaderSkeleton />
 
       <Skeleton className="h-5 w-48" />
 
       <div className="grid grid-cols-2 gap-4">
-        <Skeleton className="h-[88px] rounded-lg" />
-        <Skeleton className="h-[88px] rounded-lg" />
+        <div className="rounded-lg border border-border bg-card p-4 text-center">
+          <Skeleton className="mx-auto h-7 w-8" />
+          <Skeleton className="mx-auto mt-2 h-3 w-16" />
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4 text-center">
+          <Skeleton className="mx-auto h-7 w-8" />
+          <Skeleton className="mx-auto mt-2 h-3 w-20" />
+        </div>
       </div>
 
-      <Skeleton className="h-[60px] w-full rounded-lg" />
       <Skeleton className="h-[52px] w-full rounded-lg" />
+      <Skeleton className="h-11 w-full rounded-lg" />
     </div>
   );
 }

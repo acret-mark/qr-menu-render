@@ -20,12 +20,16 @@ export default function MenuLoading() {
           reads as the page's layout being briefly "wrong" before snapping
           into place. */}
       <div className="relative shrink-0 bg-primary px-4 pt-6 pb-14">
-        {/* Absolutely positioned, matching LanguageSelector's own
-            `absolute right-3 top-3` — NOT a flex-justified flow element.
-            The business's plan isn't known yet at this point, so this
-            placeholder always renders (a generic shape, not a decision
-            about final content) rather than being conditionally shown. */}
-        <div className="absolute right-3 top-3 z-10">
+        {/* In-flow, matching MenuHeader's own `relative z-10 flex
+            justify-end` wrapper around LanguageSelector — the business's
+            plan isn't known yet at this point, so this placeholder always
+            renders (a generic shape, not a decision about final content)
+            rather than being conditionally shown. Being in-flow (not
+            absolute) matters: it's what makes the real hero grow taller
+            for a pro-plan business, and the skeleton needs to grow by the
+            same amount or the swap to real content visibly shifts the
+            layout. */}
+        <div className="relative z-10 flex justify-end">
           <Skeleton className="h-[26px] w-14 rounded-full bg-white/40" />
         </div>
       </div>

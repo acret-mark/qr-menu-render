@@ -85,7 +85,7 @@ export function SupportPanel({ tickets }: { tickets: SupportTicket[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3 px-4">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="ticket-subject" className="text-sm font-medium">
             Subject
@@ -120,35 +120,33 @@ export function SupportPanel({ tickets }: { tickets: SupportTicket[] }) {
         </Button>
       </form>
 
-      <div className="border-t border-border pt-4">
-        <div className="mb-2 text-sm font-semibold">Your Tickets</div>
+      <div className="px-4 text-sm font-semibold text-foreground">Your Tickets</div>
 
-        {tickets.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            You haven&apos;t submitted any support tickets yet.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {tickets.map((ticket) => (
-              <li key={ticket.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedTicketId(ticket.id)}
-                  className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-background px-3.5 py-3 text-left hover:bg-muted"
-                >
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="truncate text-sm font-medium">{ticket.subject}</span>
-                    <span className="text-xs text-muted-foreground">
-                      Submitted {formatAdminDate(ticket.createdAt)}
-                    </span>
-                  </div>
-                  <TicketStatusBadge status={ticket.status} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {tickets.length === 0 ? (
+        <p className="px-4 pb-4 text-sm text-muted-foreground">
+          You haven&apos;t submitted any support tickets yet.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-2 px-4 pb-4">
+          {tickets.map((ticket) => (
+            <li key={ticket.id}>
+              <button
+                type="button"
+                onClick={() => setSelectedTicketId(ticket.id)}
+                className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-3.5 py-3 text-left hover:bg-muted"
+              >
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="truncate text-sm font-medium">{ticket.subject}</span>
+                  <span className="text-xs text-muted-foreground">
+                    Submitted {formatAdminDate(ticket.createdAt)}
+                  </span>
+                </div>
+                <TicketStatusBadge status={ticket.status} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
